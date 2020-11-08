@@ -1,0 +1,24 @@
+{
+  "name": "react-livequery-hooks",
+  "repository": {
+    "url": "https://github.com/duongvanba/react-restful-hooks"
+  },
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "files": [
+    "build/**/*"
+  ],
+  "dependencies": {
+    "query-string": "^6.13.7",
+    "react": "^17.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -b ."
+  },
+  "author": "",
+  "license": "ISC"
+}
