@@ -15,7 +15,7 @@ export function useAction(ref: string, action?: string, method: 'POST' | 'PUT' |
     async function excute(payload: any = {}) {
         setState({ data: null, error: null, loading: true })
         try {
-            const data = await request(ctx, `${ref}${action ? `/~${action}` : ''}`, method, {}, payload)
+            const data = await request(ctx, `${ref}${action ? `/${action}` : ''}`, method, {}, payload)
             mounting && setState({ data, error: null, loading: false })
         } catch (error) {
             mounting && setState({ data: null, error, loading: false })
