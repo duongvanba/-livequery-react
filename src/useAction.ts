@@ -2,14 +2,13 @@ import { useContext, useState, useEffect } from 'react'
 import { LiveQueryContext } from './LiveQueryContext'
 import { request } from './request'
 
-export type Excutor = (payload: any) => Promise<any>
-export type ExcutorWrapper = (excute: Excutor) => Excutor
+export type ExcutorHandler = (task: Promise<any>) => any
 
 export function useAction(
     ref: string,
     action?: string,
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST',
-    wrapper?: ExcutorWrapper
+    handler?: ExcutorHandler
 ) {
 
     let mounting = true
@@ -20,7 +19,7 @@ export function useAction(
     const [{ data, error, loading }, setState] = useState({ data: null, error: null, loading: false })
 
 
-    const excutor: Excutor = async (payload: any) => {
+    async function excute(payload: any) {
         setState({ data: null, error: null, loading: true })
         try {
             const data = await request(ctx, `${ref}${action ? `/${action}` : ''}`, method, {}, payload)
@@ -38,6 +37,6 @@ export function useAction(
         data,
         error,
         loading,
-        excute: wrapper ? wrapper(excutor) : excutor
+        excute: data => handler ? (handler(excute(data))) : excute(data)
     }
 }

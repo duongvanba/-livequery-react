@@ -1,8 +1,8 @@
-import { ExcutorWrapper, useAction } from "./useAction"
+import { ExcutorHandler, useAction } from "./useAction"
 
-export function useCreateAction(ref: string, wrapper?: ExcutorWrapper) {
+export function useCreateAction(ref: string, handler?: ExcutorHandler) {
 
-  const { error: create_error, excute: create, loading: creating } = useAction(ref, null, 'POST', wrapper)
+  const { error: create_error, excute: create, loading: creating } = useAction(ref, null, 'POST', handler)
 
   return {
     creating,
