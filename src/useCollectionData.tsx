@@ -55,7 +55,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
   const has_more = useRef(false)
   const re_render = () => __(Math.random())
 
-  async function fetchMore(_cursor?: string) {
+  async function fetch_more(_cursor?: string) {
 
     // Prevent duplicate
     if (loading.current) return
@@ -85,11 +85,11 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
 
   }
 
-  useEffect(() => { ref && autoFetch && fetchMore() }, [ref, autoFetch])
+  useEffect(() => { ref && autoFetch && fetch_more() }, [ref, autoFetch])
 
   function reload() {
     items.current = []
-    fetchMore()
+    fetch_more()
   }
 
   return {
@@ -97,7 +97,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
     has_more,
     loading: loading.current,
     error,
-    fetchMore: () => fetchMore(cursor.current),
+    fetch_more: () => fetch_more(cursor.current),
     reload,
     empty: items.current.length == 0 && !loading.current
   }
