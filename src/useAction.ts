@@ -38,6 +38,7 @@ export function useAction(
         data,
         error,
         loading,
-        excute
+        excute,
+        clear: () => setState({ data: null, error: null, loading: null })
     }
 } 
