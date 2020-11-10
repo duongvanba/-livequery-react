@@ -3,16 +3,16 @@ import { LiveQueryContext } from './LiveQueryContext'
 import { request } from './request'
 
 
-export function useAction(ref: string, action?: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST') {
+export function useAction(ref: string, action?: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST', wrapper?: (excute: Function) => any) {
 
     let mounting = true
 
 
     const ctx = useContext(LiveQueryContext)
 
-    const [state, setState] = useState({ data: null, error: null, loading: false })
+    const [{ data, error, loading }, setState] = useState({ data: null, error: null, loading: false })
 
-    async function excute(payload: any = {}) {
+    async function excutor(payload: any = {}) {
         setState({ data: null, error: null, loading: true })
         try {
             const data = await request(ctx, `${ref}${action ? `/${action}` : ''}`, method, {}, payload)
@@ -29,8 +29,10 @@ export function useAction(ref: string, action?: string, method: 'POST' | 'PUT' |
 
 
     return {
-        ...state,
-        excute
+        data,
+        error,
+        loading,
+        excute: wrapper ? wrapper(excutor) : excutor
     }
 }
 
