@@ -1,7 +1,8 @@
 import { useAction } from "./useAction"
 
-export function useDeleteAction(ref: string, handler?: (data: any, error: any) => any) {
-  const { error, excute, loading, data, clear } = useAction(ref, 'DELETE', handler)
+export function useDeleteAction<RequestDataType, ResultDataType = any>(ref: string, handler?: (data: ResultDataType, error: any) => any) {
+
+  const { error, excute, loading, data, clear } = useAction<RequestDataType, ResultDataType>(ref, 'DELETE', handler)
 
   return {
     deleting: loading,

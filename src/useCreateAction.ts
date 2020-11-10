@@ -1,8 +1,8 @@
 import { useAction } from "./useAction"
 
-export function useCreateAction(ref: string, handler?: (data: any, error: any) => any) {
+export function useCreateAction<RequestDataType, ResultDataType = any>(ref: string,  handler?: (data: ResultDataType, error: any, req: RequestDataType) => any) {
 
-  const { error: create_error, excute: create, loading: creating, clear, data } = useAction(ref, 'POST', handler)
+  const { error: create_error, excute: create, loading: creating, clear, data } = useAction<RequestDataType, ResultDataType>(ref, 'POST', handler)
 
   return {
     creating,
