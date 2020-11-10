@@ -1,6 +1,6 @@
-import { ExcutorHandler, useAction } from "./useAction"
+import { useAction } from "./useAction"
 
-export function useCreateAction(ref: string, handler?: ExcutorHandler) {
+export function useCreateAction(ref: string, handler?: (data: any, error: any) => any) {
 
   const { error: create_error, excute: create, loading: creating } = useAction(ref, null, 'POST', handler)
 

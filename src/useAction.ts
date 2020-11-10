@@ -2,13 +2,12 @@ import { useContext, useState, useEffect } from 'react'
 import { LiveQueryContext } from './LiveQueryContext'
 import { request } from './request'
 
-export type ExcutorHandler = (task: Promise<any>) => any
 
 export function useAction(
     ref: string,
     action?: string,
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST',
-    handler?: ExcutorHandler
+    handler?: (data: any, error: any) => any
 ) {
 
     let mounting = true
@@ -24,8 +23,10 @@ export function useAction(
         try {
             const data = await request(ctx, `${ref}${action ? `/${action}` : ''}`, method, {}, payload)
             mounting && setState({ data, error: null, loading: false })
+            handler && handler(data, null)
         } catch (error) {
             mounting && setState({ data: null, error, loading: false })
+            handler && handler(null, error)
             throw error
         }
     }
@@ -37,6 +38,6 @@ export function useAction(
         data,
         error,
         loading,
-        excute: data => handler ? (handler(excute(data))) : excute(data)
+        excute
     }
-}
+} 
