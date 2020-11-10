@@ -1,6 +1,6 @@
-import { useAction } from "./useAction"
+import { ExcutorWrapper, useAction } from "./useAction"
 
-export function useUpdateAction(ref: string, merge: boolean = true, wrapper?: (excute: Function) => any) {
+export function useUpdateAction(ref: string, merge: boolean = true, wrapper?: ExcutorWrapper) {
   const { error: update_error, excute: update, loading: updating } = useAction(ref, null, merge ? 'PATCH' : 'PUT', wrapper)
 
   return {

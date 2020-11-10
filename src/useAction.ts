@@ -2,8 +2,15 @@ import { useContext, useState, useEffect } from 'react'
 import { LiveQueryContext } from './LiveQueryContext'
 import { request } from './request'
 
+export type Excutor = (payload: any) => Promise<any>
+export type ExcutorWrapper = (excute: Excutor) => Excutor
 
-export function useAction(ref: string, action?: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST', wrapper?: (excute: Function) => any) {
+export function useAction(
+    ref: string,
+    action?: string,
+    method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST',
+    wrapper?: ExcutorWrapper
+) {
 
     let mounting = true
 
@@ -12,7 +19,8 @@ export function useAction(ref: string, action?: string, method: 'POST' | 'PUT' |
 
     const [{ data, error, loading }, setState] = useState({ data: null, error: null, loading: false })
 
-    async function excutor(payload: any = {}) {
+
+    const excutor: Excutor = async (payload: any) => {
         setState({ data: null, error: null, loading: true })
         try {
             const data = await request(ctx, `${ref}${action ? `/${action}` : ''}`, method, {}, payload)
@@ -24,9 +32,7 @@ export function useAction(ref: string, action?: string, method: 'POST' | 'PUT' |
     }
 
 
-
     useEffect(() => () => mounting = false, [])
-
 
     return {
         data,
@@ -35,9 +41,3 @@ export function useAction(ref: string, action?: string, method: 'POST' | 'PUT' |
         excute: wrapper ? wrapper(excutor) : excutor
     }
 }
-
-
-
-
-
-

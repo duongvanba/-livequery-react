@@ -1,6 +1,6 @@
-import { useAction } from "./useAction"
+import { ExcutorWrapper, useAction } from "./useAction"
 
-export function useDeleteAction(ref: string, wrapper?: (excute: Function) => any) {
+export function useDeleteAction(ref: string, wrapper?: ExcutorWrapper) {
     const { error, excute, loading } = useAction(ref, null, 'DELETE',wrapper)
   
     return {
