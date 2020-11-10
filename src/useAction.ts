@@ -5,7 +5,6 @@ import { request } from './request'
 
 export function useAction(
     ref: string,
-    action?: string,
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST',
     handler?: (data: any, error: any) => any
 ) {
@@ -21,7 +20,7 @@ export function useAction(
     async function excute(payload: any) {
         setState({ data: null, error: null, loading: true })
         try {
-            const data = await request(ctx, `${ref}${action ? `/${action}` : ''}`, method, {}, payload)
+            const data = await request(ctx, ref, method, {}, payload)
             mounting && setState({ data, error: null, loading: false })
             handler && handler(data, null)
         } catch (error) {
