@@ -5,7 +5,7 @@ import { request } from './request'
 type ActionState<T> = {
     data: T,
     loading: boolean,
-    error?: { message: string }
+    error?: { message: string, [key: string]: any }
 }
 
 export function useAction<RequestDataType, ResultDataType = any>(
