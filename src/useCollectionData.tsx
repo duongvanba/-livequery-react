@@ -20,7 +20,7 @@ export type useCollectionDataOptions<T extends { id: string }, K extends keyof T
     "==" | "!=" | ">" | ">=" | "<" | "<=",
     string | number | boolean
   ]>
-  fields: Array<keyof T>
+  fields: string
   autoFetch: boolean
   reatime: boolean | Function
 }
@@ -28,14 +28,20 @@ export type useCollectionDataOptions<T extends { id: string }, K extends keyof T
 
 
 
-
+type State<T> = {
+  items: T[],
+  loading: boolean,
+  error: any,
+  has_more: boolean,
+  cursor: string
+}
 
 export const useCollectionData = <T extends { id: string }, K extends keyof T = keyof T>(
   ref: string,
   options: Partial<useCollectionDataOptions<T, K>> = {}
 ) => {
 
-  const { autoFetch = true, fields = [], limit = 10, reatime = false, where = [] } = options
+  const { autoFetch = true, fields, limit = 10, reatime = false, where = [] } = options
 
   const ctx = useContext(LiveQueryContext)
 
@@ -47,59 +53,68 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
     return p
   }, {})
 
-  const items = useRef<T[]>([])
-  const loading = useRef<boolean>(false)
-  const [error, set_error] = useState(null)
-  const cursor = useRef<string>(null)
-  const [_, __] = useState(0)
-  const has_more = useRef(false)
-  const re_render = () => __(Math.random())
+  const [{ error, loading, cursor, has_more, items }, setState] = useState<State<T>>({
+    items: [],
+    loading: false,
+    error: null,
+    has_more: false,
+    cursor: null
+  })
 
-  async function fetch_more(_cursor?: string) {
+  const isLoading = useRef(false)
 
-    // Prevent duplicate
-    if (loading.current) return
-    loading.current = true
-    re_render()
+  async function fetch_more() {
+    if (isLoading.current) return
+    isLoading.current = true
 
     try {
-      let query_params = {
+      setState(s => ({
+        ...s,
+        error: null,
+        loading: false
+      }))
+      const rs = await request<Response<T>>(ctx, ref, 'GET', {
         _limit: limit,
-        _cursor,
+        _cursor: cursor,
+        _fields: fields,
         ...filters
-      } as any
-      fields.length > 0 && (query_params._fields = fields.join(',') as any)
-      const rs = await request<Response<T>>(ctx, ref, 'GET', query_params)
+      })
       const isCollection = refs.length % 2 == 1
       const data = isCollection ? rs.data : { items: [rs], has_more: false, cursor: null }
-      cursor.current = data.cursor
-      has_more.current = data.has_more
-      data.items.map(item => items.current.push(item))
-      loading.current = false
-      re_render()
-    } catch (e) {
-      loading.current = false
-      set_error(e)
-      throw e
+      setState(s => ({
+        cursor: data.cursor,
+        items: [...s.items, ...data.items],
+        error: null,
+        has_more: data.has_more,
+        loading: false
+      }))
+    } catch (error) {
+      setState(s => ({
+        ...s,
+        error,
+        loading: false
+      }))
+      throw error
     }
 
+    isLoading.current = false
   }
 
   useEffect(() => { ref && autoFetch && fetch_more() }, [ref, autoFetch])
 
   function reload() {
-    items.current = []
+    setState(s => ({ ...s, error: null, loading: false, items }))
     fetch_more()
   }
 
   return {
-    items: items.current,
-    has_more,
-    loading: loading.current,
+    items,
+    loading,
     error,
-    fetch_more: () => fetch_more(cursor.current),
+    fetch_more,
     reload,
-    empty: items.current.length == 0 && !loading.current
+    has_more,
+    empty: items.length == 0 && !loading
   }
 }
 
