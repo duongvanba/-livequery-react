@@ -100,7 +100,10 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
     isLoading.current = false
   }
 
-  useEffect(() => { ref && autoFetch && fetch_more() }, [ref, autoFetch])
+  useEffect(() => {
+    setState(s => ({ ...s, items: [], loading: false, error: null }))
+    ref && autoFetch && fetch_more()
+  }, [ref, autoFetch])
 
   function reload() {
     setState(s => ({ ...s, error: null, loading: false, items }))
