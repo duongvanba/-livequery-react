@@ -57,7 +57,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
 
   const [{ error, loading, cursor, has_more, items }, setState] = useState<State<T>>({
     items: [],
-    loading: false,
+    loading: autoFetch,
     error: null,
     has_more: false,
     cursor: null
