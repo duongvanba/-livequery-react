@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useContext } from "react"
 import { request } from "./request"
 import { LiveQueryContext } from "./LiveQueryContext"
 import { Response } from "./Response"
+import { useCache } from "./useCache"
 
 export enum FilterFunctions {
   "==" = "eq",
@@ -47,6 +48,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
 
   const refs = ref?.split('/') || []
 
+  const [cache, setCache] = useCache(ref && `#cache:${ref}#${JSON.stringify(options)}`, [])
 
   const filters = where.reduce((p, [field, fn, value]) => {
     p[field as string] = `${FilterFunctions[fn]}|${JSON.stringify(value)}`
@@ -81,13 +83,17 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
       })
       const isCollection = refs.length % 2 == 1
       const data = isCollection ? rs.data : { items: [rs], has_more: false, cursor: null }
-      setState(s => ({
-        cursor: data.cursor,
-        items: [...s.items, ...data.items],
-        error: null,
-        has_more: data.has_more,
-        loading: false
-      }))
+      setState(s => {
+        const items = [...s.items, ...data.items]
+        s.items.length == 0 && setCache(items)
+        return {
+          cursor: data.cursor,
+          items,
+          error: null,
+          has_more: data.has_more,
+          loading: false
+        }
+      })
     } catch (error) {
       setState(s => ({
         ...s,
@@ -111,7 +117,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
   }
 
   return {
-    items,
+    items: (loading && items.length == 0 && cache) ? cache : items,
     loading,
     error,
     fetch_more,
