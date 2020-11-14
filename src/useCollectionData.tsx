@@ -73,7 +73,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
       setState(s => ({
         ...s,
         error: null,
-        loading: false
+        loading: true
       }))
       const rs = await request<Response<T>>(ctx, ref, 'GET', {
         _limit: limit,
