@@ -117,7 +117,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
   }
 
   return {
-    items: (loading && items.length == 0 && cache) ? cache : items,
+    items: (loading && items.length == 0 && cache) ? cache as T[] : items,
     loading,
     error,
     fetch_more,
