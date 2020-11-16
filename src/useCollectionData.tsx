@@ -112,7 +112,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
   }, [ref, autoFetch])
 
   function reload() {
-    setState(s => ({ ...s, error: null, loading: false, items }))
+    setState(s => ({ ...s, error: null, loading: false, items:[] }))
     fetch_more()
   }
 
