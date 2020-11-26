@@ -10,7 +10,7 @@ type ActionState<T> = {
 
 export function useAction<RequestDataType, ResultDataType = any>(
     ref: string,
-    method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST',
+    method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'GET' = 'POST',
     handler?: (data: ResultDataType, error: any, req: RequestDataType) => any
 ) {
 
@@ -22,10 +22,10 @@ export function useAction<RequestDataType, ResultDataType = any>(
     const [{ data, error, loading }, setState] = useState<ActionState<ResultDataType>>({ data: null, error: null, loading: false })
 
 
-    async function excute(payload: RequestDataType) {
+    async function excute(payload: RequestDataType, query: any = {}) {
         setState({ data: null, error: null, loading: true })
         try {
-            const data = await request(ctx, ref, method, {}, payload)
+            const data = await request(ctx, ref, method, query, payload)
             mounting && setState({ data, error: null, loading: false })
             handler && handler(data, null, payload)
             return data as ResultDataType
