@@ -1,11 +1,11 @@
 import { useCollectionData, useCollectionDataOptions } from "./useCollectionData"
 
-export const useDocumentData = <T extends { id: string }, K extends keyof T = keyof T>(
+export const useDocumentData = <T extends { id: string }>(
   ref: string,
-  options: Partial<useCollectionDataOptions<T, K>> = {}
+  options: Partial<useCollectionDataOptions<T>> = {}
 ) => {
 
-  const { items, loading, error, reload } = useCollectionData<T, K>(ref, options)
+  const { items, loading, error, reload } = useCollectionData<T>(ref, options)
 
   return {
     item: items[0],

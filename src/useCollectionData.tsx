@@ -21,10 +21,13 @@ export const gte = value => `gte|${JSON.stringify(value)}`
 export const lt = value => `lt|${JSON.stringify(value)}`
 export const lte = value => `lte|${JSON.stringify(value)}`
 
+export type ApiObject = {
+  id: string
+}
 
-export type useCollectionDataOptions<T extends { id: string }, K extends keyof T = keyof T> = {
+export type useCollectionDataOptions<T extends ApiObject> = {
   limit: number,
-  where: { [key in K]: string }
+  where: { [key in keyof T]?: string }
   fields: string
   autoFetch: boolean
   reatime: boolean | Function
@@ -33,18 +36,18 @@ export type useCollectionDataOptions<T extends { id: string }, K extends keyof T
 
 
 
-type State<T, K extends keyof T = keyof T> = {
+type State<T> = {
   items: T[],
   loading: boolean,
   error: any,
   has_more: boolean,
   cursor: string,
-  filters: { [key in K]: string }
+  filters: { [key in keyof T]?: string }
 }
 
-export const useCollectionData = <T extends { id: string }, K extends keyof T = keyof T>(
+export const useCollectionData = <T extends ApiObject>(
   ref: string,
-  options: Partial<useCollectionDataOptions<T, K>> = {}
+  options: Partial<useCollectionDataOptions<T>> = {}
 ) => {
 
   const { autoFetch = true, fields, limit = 10, reatime = false } = options
@@ -56,7 +59,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
   const [cache, setCache] = useCache(ref && `#cache:${ref}#${JSON.stringify(options)}`, [])
 
 
-  const [{ error, loading, cursor, has_more, items, filters }, setState] = useState<State<T, K>>({
+  const [{ error, loading, cursor, has_more, items, filters }, setState] = useState<State<T>>({
     items: [],
     loading: autoFetch,
     error: null,
@@ -67,7 +70,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
 
   const isLoading = useRef(false)
 
-  async function fetch_more(newFilters: { [key in K]: string } = {} as any, reset: boolean = false) {
+  async function fetch_more(newFilters: { [key in keyof T]: string } = {} as any, reset: boolean = false) {
     if (isLoading.current) return
     isLoading.current = true
 
@@ -133,6 +136,3 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
     empty: items.length == 0 && !loading
   }
 } 
-
-
-
