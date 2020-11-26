@@ -132,12 +132,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
     has_more,
     empty: items.length == 0 && !loading
   }
-}
-
-
-
-
-
+} 
 
 
 
