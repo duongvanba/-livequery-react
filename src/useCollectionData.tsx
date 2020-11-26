@@ -70,7 +70,7 @@ export const useCollectionData = <T extends ApiObject>(
 
   const isLoading = useRef(false)
 
-  async function fetch_more(newFilters: { [key in keyof T]: string } = {} as any, reset: boolean = false) {
+  async function fetch_more(newFilters: { [key in keyof T]?: string } = {}, reset: boolean = false) {
     if (isLoading.current) return
     isLoading.current = true
 
