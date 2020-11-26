@@ -27,7 +27,7 @@ export type ApiObject = {
 
 export type useCollectionDataOptions<T extends ApiObject> = {
   limit: number,
-  where: { [key in keyof T]?: string }
+  where: { [key in keyof T]?: any }
   fields: string
   autoFetch: boolean
   reatime: boolean | Function
@@ -42,7 +42,7 @@ type State<T> = {
   error: any,
   has_more: boolean,
   cursor: string,
-  filters: { [key in keyof T]?: string }
+  filters: { [key in keyof T]?: any }
 }
 
 export const useCollectionData = <T extends ApiObject>(
