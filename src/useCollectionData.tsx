@@ -14,13 +14,17 @@ export enum FilterFunctions {
 }
 
 
+
+export const ne = value => `ne|${JSON.stringify(value)}`
+export const gt = value => `gt|${JSON.stringify(value)}`
+export const gte = value => `gte|${JSON.stringify(value)}`
+export const lt = value => `lt|${JSON.stringify(value)}`
+export const lte = value => `lte|${JSON.stringify(value)}`
+
+
 export type useCollectionDataOptions<T extends { id: string }, K extends keyof T = keyof T> = {
   limit: number,
-  where: Array<[
-    K,
-    "==" | "!=" | ">" | ">=" | "<" | "<=",
-    string | number | boolean
-  ]>
+  where: { [key in K]: string }
   fields: string
   autoFetch: boolean
   reatime: boolean | Function
@@ -29,12 +33,13 @@ export type useCollectionDataOptions<T extends { id: string }, K extends keyof T
 
 
 
-type State<T> = {
+type State<T, K extends keyof T = keyof T> = {
   items: T[],
   loading: boolean,
   error: any,
   has_more: boolean,
-  cursor: string
+  cursor: string,
+  filters: { [key in K]: string }
 }
 
 export const useCollectionData = <T extends { id: string }, K extends keyof T = keyof T>(
@@ -42,7 +47,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
   options: Partial<useCollectionDataOptions<T, K>> = {}
 ) => {
 
-  const { autoFetch = true, fields, limit = 10, reatime = false, where = [] } = options
+  const { autoFetch = true, fields, limit = 10, reatime = false } = options
 
   const ctx = useContext(LiveQueryContext)
 
@@ -50,22 +55,19 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
 
   const [cache, setCache] = useCache(ref && `#cache:${ref}#${JSON.stringify(options)}`, [])
 
-  const filters = where.reduce((p, [field, fn, value]) => {
-    p[field as string] = `${FilterFunctions[fn]}|${JSON.stringify(value)}`
-    return p
-  }, {})
 
-  const [{ error, loading, cursor, has_more, items }, setState] = useState<State<T>>({
+  const [{ error, loading, cursor, has_more, items, filters }, setState] = useState<State<T, K>>({
     items: [],
     loading: autoFetch,
     error: null,
     has_more: false,
-    cursor: null
+    cursor: null,
+    filters: options.where
   })
 
   const isLoading = useRef(false)
 
-  async function fetch_more() {
+  async function fetch_more(newFilters: { [key in K]: string } = {} as any, reset: boolean = false) {
     if (isLoading.current) return
     isLoading.current = true
 
@@ -75,12 +77,16 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
         error: null,
         loading: true
       }))
+
+      const mergeFilters = reset ? newFilters : { ...filters, ...newFilters }
+
       const rs = await request<Response<T>>(ctx, ref, 'GET', {
         _limit: limit,
         _cursor: cursor,
         _fields: fields,
-        ...filters
+        ...mergeFilters
       })
+
       const isCollection = refs.length % 2 == 1
       const data = isCollection ? rs.data : { items: [rs], has_more: false, cursor: null }
       setState(s => {
@@ -91,7 +97,8 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
           items,
           error: null,
           has_more: data.has_more,
-          loading: false
+          loading: false,
+          filters: mergeFilters
         }
       })
     } catch (error) {
@@ -112,7 +119,7 @@ export const useCollectionData = <T extends { id: string }, K extends keyof T = 
   }, [ref, autoFetch])
 
   function reload() {
-    setState(s => ({ ...s, error: null, loading: false, items:[] }))
+    setState(s => ({ ...s, error: null, loading: false, items: [] }))
     fetch_more()
   }
 
