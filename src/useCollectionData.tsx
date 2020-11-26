@@ -15,11 +15,11 @@ export enum FilterFunctions {
 
 
 
-export const ne = value => `ne|${JSON.stringify(value)}`
-export const gt = value => `gt|${JSON.stringify(value)}`
-export const gte = value => `gte|${JSON.stringify(value)}`
-export const lt = value => `lt|${JSON.stringify(value)}`
-export const lte = value => `lte|${JSON.stringify(value)}`
+export const ne = value => value === undefined ? value : `ne|${JSON.stringify(value)}`
+export const gt = value => value === undefined ? value : `gt|${JSON.stringify(value)}`
+export const gte = value => value === undefined ? value : `gte|${JSON.stringify(value)}`
+export const lt = value => value === undefined ? value : `lt|${JSON.stringify(value)}`
+export const lte = value => value === undefined ? value : `lte|${JSON.stringify(value)}`
 
 export type ApiObject = {
   id: string
