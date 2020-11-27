@@ -10,16 +10,17 @@ export type ApiObject = {
   id: string
 }
 
-export const ne = <T>(value: T) => ({ exp: 'ne', value })
-export const gt = <T>(value: T) => ({ exp: 'gt', value })
-export const gte = <T>(value: T) => ({ exp: 'gte', value })
-export const lt = <T>(value: T) => ({ exp: 'lt', value })
-export const lte = <T>(value: T) => ({ exp: 'lte', value })
-export const in_array = <T>(value: T[]) => ({ exp: 'in_array', value })
+export const ne = <T>(value: T) => ({ exp: 'ne', value }) as FilterExpression<T>
+export const gt = <T>(value: T) => ({ exp: 'gt', value }) as FilterExpression<T>
+export const gte = <T>(value: T) => ({ exp: 'gte', value }) as FilterExpression<T>
+export const lt = <T>(value: T) => ({ exp: 'lt', value }) as FilterExpression<T>
+export const lte = <T>(value: T) => ({ exp: 'lte', value }) as FilterExpression<T>
+export const in_array = <T>(value: T[]) => ({ exp: 'in', value }) as FilterExpression<T>
 
 
 type FilterExpression<T> = { exp: 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | 'in', value: any }
 type FilterExpressionList<T> = { [key in keyof T]?: null | T[key] | FilterExpression<T[key]> } & { _q?: string }
+type FilterExpressionResult<T> = { [key in keyof T]?: null | FilterExpression<T[key]> } & { _q?: string }
 
 export type useCollectionDataOptions<T extends ApiObject> = {
   limit: number,
@@ -36,14 +37,14 @@ type State<T> = {
   error: any,
   has_more: boolean,
   cursor: string,
-  filters: FilterExpressionList<T>
+  filters: FilterExpressionResult<T>
 }
 
 function filters_format<T>(filters: FilterExpressionList<T> = {}) {
   return Object.keys(filters).reduce((p, c) => {
     p[c] = filters[c]?.exp ? filters[c] : { exp: 'eq', value: filters[c] }
     return p
-  }, {}) as FilterExpressionList<T>
+  }, {}) as FilterExpressionResult<T>
 }
 
 
@@ -186,6 +187,6 @@ export const useCollectionData = <T extends ApiObject>(
     filter,
     has_more,
     empty: items.length == 0 && !loading,
-    filters: query.filters as { [key in keyof T]?: null | FilterExpression<T[key]> } & { _q?: string }
+    filters: query.filters
   }
-}  
+}
