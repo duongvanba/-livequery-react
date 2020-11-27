@@ -13,18 +13,18 @@ export enum FilterFunctions {
   "<=" = "lte",
 }
 
-
-
-export const ne = value => ['ne', value]
-export const gt = value => ['gt', value]
-export const gte = value => ['gte', value]
-export const lt = value => ['lt', value]
-export const lte = value => ['lte', value]
-export const in_array = (value: any[]) => ['in', value]
-
 export type ApiObject = {
   id: string
 }
+
+export const ne = <T>(value: T) => ['ne', value]
+export const gt = <T>(value: T) => ['gt', value]
+export const gte = <T>(value: T) => ['gte', value]
+export const lt = <T>(value: T) => ['lt', value]
+export const lte = <T>(value: T) => ['lte', value]
+export const in_array = <T>(value: T[]) => ['in', value]
+
+
 
 type FilterExpression<T> = T | null | [string, null | T]
 
