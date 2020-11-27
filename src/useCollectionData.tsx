@@ -52,14 +52,16 @@ export const useCollectionData = <T extends ApiObject>(
 
   const { autoFetch = true, fields, limit = 10, reatime = false } = options
 
-  const ctx = useContext(LiveQueryContext)
+
 
   const refs = ref?.split('/') || []
+  const isCollection = refs.length % 2 == 1
 
+  const ctx = useContext(LiveQueryContext)
   const [cache, setCache] = useCache(ref && `#cache:${ref}#${JSON.stringify(options)}`, [])
 
 
-  const [{ error, loading, cursor, has_more, items, filters }, setState] = useState<State<T>>({
+  const [{ error, loading, cursor, has_more, items, ...query }, setState] = useState<State<T>>({
     items: [],
     loading: autoFetch,
     error: null,
@@ -68,40 +70,44 @@ export const useCollectionData = <T extends ApiObject>(
     filters: options.where || {}
   })
 
-  const isLoading = useRef(false)
 
-  async function fetch_more(newFilters: { [key in keyof T]?: string } = {}, reset: boolean = false) {
+  // Fetch data
+  const isLoading = useRef(false)
+  async function fetch_more(new_filters: { [key in keyof T]?: string } = {}, reset: boolean = false) {
+
     if (isLoading.current) return
     isLoading.current = true
+
+    const filters = reset ? new_filters : { ...query.filters, ...new_filters }
 
     try {
       setState(s => ({
         ...s,
+        items: (Object.keys(new_filters).length > 0 || reset) ? [] : s.items,
         error: null,
-        loading: true
+        loading: true,
+        filters
       }))
-
-      const mergeFilters = reset ? newFilters : { ...filters, ...newFilters }
 
       const rs = await request<Response<T>>(ctx, ref, 'GET', {
         _limit: limit,
         _cursor: cursor,
         _fields: fields,
-        ...mergeFilters
+        ...filters
       })
 
-      const isCollection = refs.length % 2 == 1
+
       const data = isCollection ? rs.data : { items: [rs], has_more: false, cursor: null }
       setState(s => {
         const items = [...s.items, ...data.items]
         s.items.length == 0 && setCache(items)
         return {
+          ...s,
           cursor: data.cursor,
           items,
           error: null,
           has_more: data.has_more,
-          loading: false,
-          filters: mergeFilters
+          loading: false
         }
       })
     } catch (error) {
@@ -117,23 +123,18 @@ export const useCollectionData = <T extends ApiObject>(
   }
 
   useEffect(() => {
-    setState(s => ({ ...s, items: [], loading: false, error: null }))
-    ref && autoFetch && fetch_more()
+    ref && autoFetch && fetch_more({}, true)
   }, [ref, autoFetch])
 
-  function reload() {
-    setState(s => ({ ...s, error: null, loading: false, items: [] }))
-    fetch_more()
-  }
 
   return {
     items: (loading && items.length == 0 && cache) ? cache as T[] : items,
     loading,
     error,
     fetch_more,
-    reload,
+    reload: () => fetch_more(query.filters, true),
     has_more,
     empty: items.length == 0 && !loading,
-    filters
+    filters: query.filters
   }
 } 
