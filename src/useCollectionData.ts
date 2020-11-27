@@ -27,10 +27,11 @@ export const in_array = <T>(value: T[]) => ['in', value] as ['in', T[]]
 
 
 type FilterExpression<T> = T | null | [string, null | T]
+type FilterExpressionList<T> = { [key in keyof T]?: FilterExpression<T[key]> } & { _q?: string }
 
 export type useCollectionDataOptions<T extends ApiObject> = {
   limit: number,
-  where: { [key in keyof T]?: FilterExpression<T[key]> }
+  where: FilterExpressionList<T>
   fields: string
   autoFetch: boolean
   reatime: boolean | Function
@@ -44,7 +45,7 @@ type State<T> = {
   error: any,
   has_more: boolean,
   cursor: string,
-  filters: { [key in keyof T]?: FilterExpression<T[key]> }
+  filters: FilterExpressionList<T>
 }
 
 export const useCollectionData = <T extends ApiObject>(
@@ -75,7 +76,7 @@ export const useCollectionData = <T extends ApiObject>(
 
   // Fetch data
   const isLoading = useRef(false)
-  async function fetch_more(new_filters: { [key in keyof T]?: FilterExpression<T[key]> } = {}, reset: boolean = false) {
+  async function fetch_more(new_filters: FilterExpressionList<T> = {}, reset: boolean = false) {
 
     if (isLoading.current) return
     isLoading.current = true
@@ -142,4 +143,4 @@ export const useCollectionData = <T extends ApiObject>(
     empty: items.length == 0 && !loading,
     filters: query.filters
   }
-} 
+}  
