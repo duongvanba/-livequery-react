@@ -96,9 +96,9 @@ export const useCollectionData = <T extends ApiObject>(
 
       const rs = await request<Response<T>>(ctx, ref, 'GET', {
         _limit: limit,
-        _cursor: cursor,
         _fields: fields || undefined,
-        ...filters_builder(query.filters)
+        ...filters_builder(query.filters),
+        _cursor: cursor,
       })
 
 
