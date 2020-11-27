@@ -10,16 +10,16 @@ export type ApiObject = {
   id: string
 }
 
-export const ne = <T>(value: T) => ['ne', value] as ['ne', T]
-export const gt = <T>(value: T) => ['gt', value] as ['gt', T]
-export const gte = <T>(value: T) => ['gte', value] as ['gte', T]
-export const lt = <T>(value: T) => ['lt', value] as ['lt', T]
-export const lte = <T>(value: T) => ['lte', value] as ['lte', T]
-export const in_array = <T>(value: T[]) => ['in', value] as ['in', T[]]
+export const ne = <T>(value: T) => ({ exp: 'ne', value })
+export const gt = <T>(value: T) => ({ exp: 'gt', value })
+export const gte = <T>(value: T) => ({ exp: 'gte', value })
+export const lt = <T>(value: T) => ({ exp: 'lt', value })
+export const lte = <T>(value: T) => ({ exp: 'lte', value })
+export const in_array = <T>(value: T[]) => ({ exp: 'in_array', value })
 
 
-type FilterExpression<T> = ['ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq', null | T] | ['in', T[]]
-type FilterExpressionList<T> = { [key in keyof T]?: null | T[key] | FilterExpression<T[key]> } & { _q?: string }
+type FilterExpression<T> = { exp: 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq', value: T } | { exp: 'in', value: T[] }
+type FilterExpressionList<T> = { [key in keyof T]?: null | FilterExpression<T[key]> } & { _q?: string }
 
 export type useCollectionDataOptions<T extends ApiObject> = {
   limit: number,
@@ -30,7 +30,6 @@ export type useCollectionDataOptions<T extends ApiObject> = {
 }
 
 
-
 type State<T> = {
   items: T[],
   loading: boolean,
@@ -38,6 +37,13 @@ type State<T> = {
   has_more: boolean,
   cursor: string,
   filters: FilterExpressionList<T>
+}
+
+function filters_format<T>(filters: FilterExpressionList<T> = {}) {
+  return Object.keys(filters).reduce((p, c) => {
+    p[c] = filters[c]?.exp ? filters[c] : { exp: 'eq', value: filters[c] }
+    return p
+  }, {}) as FilterExpressionList<T>
 }
 
 
@@ -61,7 +67,7 @@ export const useCollectionData = <T extends ApiObject>(
     error: null,
     has_more: false,
     cursor: null,
-    filters: options.where || {}
+    filters: filters_format(options.where)
   })
 
 
@@ -70,7 +76,7 @@ export const useCollectionData = <T extends ApiObject>(
 
   function filters_builder(filters: FilterExpressionList<T>) {
     return Object.keys(filters).reduce((p, c) => {
-      p[c] = Array.isArray(filters[c]) ? `${filters[c][0]}|${JSON.stringify(filters[c][1])}` : filters[c]
+      p[c] = `${filters[c].exp}|${JSON.stringify(filters[c].value)}`
       return p
     }, {})
   }
@@ -121,9 +127,9 @@ export const useCollectionData = <T extends ApiObject>(
   }
 
 
-  async function filter(new_filters: FilterExpressionList<T> = {}, merge:boolean = true) { 
+  async function filter(new_filters: FilterExpressionList<T> = {}, merge: boolean = true) {
 
-    const filters = !merge ? new_filters : { ...query.filters, ...new_filters }
+    const filters = filters_format(!merge ? new_filters : { ...query.filters, ...new_filters })
 
     try {
       setState(s => ({
@@ -136,7 +142,7 @@ export const useCollectionData = <T extends ApiObject>(
       }))
 
       const rs = await request<Response<T>>(ctx, ref, 'GET', {
-        _limit: limit, 
+        _limit: limit,
         _fields: fields || undefined,
         ...filters_builder(filters)
       })
@@ -163,7 +169,7 @@ export const useCollectionData = <T extends ApiObject>(
         loading: false
       }))
       throw error
-    } 
+    }
   }
 
   useEffect(() => {
@@ -175,13 +181,11 @@ export const useCollectionData = <T extends ApiObject>(
     loading,
     error,
     reload: () => filter(query.filters, false),
+    reset: () => filter({}, false),
     fetch_more,
     filter,
     has_more,
     empty: items.length == 0 && !loading,
-    filters: Object.keys(query.filters).reduce((p, c) => {
-      p[c] = Array.isArray(query.filters[c]) ? query.filters : ['==', query.filters[c]]
-      return p
-    }, {}) as { [key in keyof T]?: FilterExpression<T[key]> } & { _q?: string }
+    filters: query.filters
   }
 }  
