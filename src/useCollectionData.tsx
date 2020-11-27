@@ -26,14 +26,15 @@ export type ApiObject = {
   id: string
 }
 
+type FilterExpression<T> = T | null | [string, null | T]
+
 export type useCollectionDataOptions<T extends ApiObject> = {
   limit: number,
-  where: { [key in keyof T]?: any }
+  where: { [key in keyof T]?: FilterExpression<T[key]> }
   fields: string
   autoFetch: boolean
   reatime: boolean | Function
 }
-
 
 
 
@@ -43,7 +44,7 @@ type State<T> = {
   error: any,
   has_more: boolean,
   cursor: string,
-  filters: { [key in keyof T]?: any }
+  filters: { [key in keyof T]?: FilterExpression<T[key]> }
 }
 
 export const useCollectionData = <T extends ApiObject>(
@@ -74,7 +75,7 @@ export const useCollectionData = <T extends ApiObject>(
 
   // Fetch data
   const isLoading = useRef(false)
-  async function fetch_more(new_filters: { [key in keyof T]?: string } = {}, reset: boolean = false) {
+  async function fetch_more(new_filters: { [key in keyof T]?: FilterExpression<T[key]> } = {}, reset: boolean = false) {
 
     if (isLoading.current) return
     isLoading.current = true
@@ -95,7 +96,7 @@ export const useCollectionData = <T extends ApiObject>(
         _cursor: cursor,
         _fields: fields,
         ...Object.keys(filters).reduce((p, c) => {
-          p[c] = filters[c]?.length ? `${filters[c][0]}|${JSON.stringify(filters[c][1])}}` : filters[c]
+          p[c] = filters[c]?.length ? `${filters[c][0]}|${JSON.stringify(filters[c][1])}` : filters[c]
           return p
         }, {})
       })
