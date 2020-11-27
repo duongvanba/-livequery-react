@@ -133,6 +133,7 @@ export const useCollectionData = <T extends ApiObject>(
     fetch_more,
     reload,
     has_more,
-    empty: items.length == 0 && !loading
+    empty: items.length == 0 && !loading,
+    filters
   }
 } 
