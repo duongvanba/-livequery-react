@@ -87,6 +87,7 @@ export const useCollectionData = <T extends ApiObject>(
       setState(s => ({
         ...s,
         items: (Object.keys(new_filters).length > 0 || reset) ? [] : s.items,
+        cursor:(Object.keys(new_filters).length > 0 || reset) ? null : s.cursor,
         error: null,
         loading: true,
         filters
