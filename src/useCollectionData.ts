@@ -4,30 +4,21 @@ import { LiveQueryContext } from "./LiveQueryContext"
 import { Response } from "./Response"
 import { useCache } from "./useCache"
 
-export enum FilterFunctions {
-  "==" = "eq",
-  "!=" = "ne",
-  ">" = "gt",
-  ">=" = "gte",
-  "<" = "lt",
-  "<=" = "lte",
-}
+
 
 export type ApiObject = {
   id: string
 }
 
-export const ne = <T>(value: T) => ['ne', value] as ['ne', T]
-export const gt = <T>(value: T) => ['gt', value] as ['gt', T]
-export const gte = <T>(value: T) => ['gte', value] as ['gte', T]
-export const lt = <T>(value: T) => ['lt', value] as ['lt', T]
-export const lte = <T>(value: T) => ['lte', value] as ['lte', T]
-export const in_array = <T>(value: T[]) => ['in', value] as ['in', T[]]
+export const ne = <T>(value: T) => ['ne', value]
+export const gt = <T>(value: T) => ['gt', value]
+export const gte = <T>(value: T) => ['gte', value]
+export const lt = <T>(value: T) => ['lt', value]
+export const lte = <T>(value: T) => ['lte', value]
+export const in_array = <T>(value: T[]) => ['in', value]
 
-
-
-type FilterExpression<T> = T | null | [string, null | T]
-type FilterExpressionList<T> = { [key in keyof T]?: FilterExpression<T[key]> } & { _q?: string }
+type FilterExpression<T> = ['ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq', null | T] | ['in', T[]]
+type FilterExpressionList<T> = { [key in keyof T]?: null | T[key] | FilterExpression<T[key]> } & { _q?: string }
 
 export type useCollectionDataOptions<T extends ApiObject> = {
   limit: number,
@@ -48,14 +39,13 @@ type State<T> = {
   filters: FilterExpressionList<T>
 }
 
+
 export const useCollectionData = <T extends ApiObject>(
   ref: string,
   options: Partial<useCollectionDataOptions<T>> = {}
 ) => {
 
-  const { autoFetch = true, fields, limit = 10, reatime = false } = options
-
-
+  const { autoFetch = true, fields, limit = 10 } = options
 
   const refs = ref?.split('/') || []
   const isCollection = refs.length % 2 == 1
@@ -75,36 +65,36 @@ export const useCollectionData = <T extends ApiObject>(
 
 
   // Fetch data
-  const isLoading = useRef(false)
-  async function fetch_more(new_filters: FilterExpressionList<T> = {}, reset: boolean = false) {
+  const loading_more = useRef(false)
 
-    if (isLoading.current) return
-    isLoading.current = true
+  function filters_builder(filters: FilterExpressionList<T>) {
+    return Object.keys(filters).reduce((p, c) => {
+      p[c] = Array.isArray(filters[c]) ? `${filters[c][0]}|${JSON.stringify(filters[c][1])}` : filters[c]
+      return p
+    }, {})
+  }
 
-    const filters = reset ? new_filters : { ...query.filters, ...new_filters }
+  async function fetch_more() {
+    if (loading_more.current) return
+    loading_more.current = true
 
     try {
       setState(s => ({
         ...s,
-        items: (Object.keys(new_filters).length > 0 || reset) ? [] : s.items,
-        cursor:(Object.keys(new_filters).length > 0 || reset) ? null : s.cursor,
         error: null,
-        loading: true,
-        filters
+        loading: true
       }))
 
       const rs = await request<Response<T>>(ctx, ref, 'GET', {
         _limit: limit,
         _cursor: cursor,
-        _fields: fields,
-        ...Object.keys(filters).reduce((p, c) => {
-          p[c] = filters[c]?.length ? `${filters[c][0]}|${JSON.stringify(filters[c][1])}` : filters[c]
-          return p
-        }, {})
+        _fields: fields || undefined,
+        ...filters_builder(query.filters)
       })
 
 
       const data = isCollection ? rs.data : { items: [rs], has_more: false, cursor: null }
+
       setState(s => {
         const items = [...s.items, ...data.items]
         s.items.length == 0 && setCache(items)
@@ -126,22 +116,71 @@ export const useCollectionData = <T extends ApiObject>(
       throw error
     }
 
-    isLoading.current = false
+    loading_more.current = false
+  }
+
+
+  async function filter(new_filters: FilterExpressionList<T> = {}, merge:boolean = true) { 
+
+    const filters = !merge ? new_filters : { ...query.filters, ...new_filters }
+
+    try {
+      setState(s => ({
+        ...s,
+        items: [],
+        cursor: null,
+        error: null,
+        loading: true,
+        filters
+      }))
+
+      const rs = await request<Response<T>>(ctx, ref, 'GET', {
+        _limit: limit, 
+        _fields: fields || undefined,
+        ...filters_builder(filters)
+      })
+
+
+      const data = isCollection ? rs.data : { items: [rs], has_more: false, cursor: null }
+
+      setState(s => {
+        const items = [...s.items, ...data.items]
+        s.items.length == 0 && setCache(items)
+        return {
+          ...s,
+          cursor: data.cursor,
+          items,
+          error: null,
+          has_more: data.has_more,
+          loading: false
+        }
+      })
+    } catch (error) {
+      setState(s => ({
+        ...s,
+        error,
+        loading: false
+      }))
+      throw error
+    } 
   }
 
   useEffect(() => {
-    ref && autoFetch && fetch_more({}, true)
+    ref && autoFetch && fetch_more()
   }, [ref, autoFetch])
-
 
   return {
     items: (loading && items.length == 0 && cache) ? cache as T[] : items,
     loading,
     error,
+    reload: () => filter(query.filters, false),
     fetch_more,
-    reload: () => fetch_more(query.filters, true),
+    filter,
     has_more,
     empty: items.length == 0 && !loading,
-    filters: query.filters
+    filters: Object.keys(query.filters).reduce((p, c) => {
+      p[c] = Array.isArray(query.filters[c]) ? query.filters : ['==', query.filters[c]]
+      return p
+    }, {}) as { [key in keyof T]?: FilterExpression<T[key]> } & { _q?: string }
   }
 }  
