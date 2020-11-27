@@ -77,7 +77,7 @@ export const useCollectionData = <T extends ApiObject>(
 
   function filters_builder(filters: FilterExpressionList<T>) {
     return Object.keys(filters).reduce((p, c) => {
-      p[c] = `${filters[c].exp}|${JSON.stringify(filters[c].value)}`
+      p[c] = c[0] == '_' ? filters[c] : `${filters[c].exp}|${JSON.stringify(filters[c].value)}`
       return p
     }, {})
   }
