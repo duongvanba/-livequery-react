@@ -18,7 +18,7 @@ export const lte = <T>(value: T) => ({ exp: 'lte', value })
 export const in_array = <T>(value: T[]) => ({ exp: 'in_array', value })
 
 
-type FilterExpression<T> = { exp: 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq', value: T } | { exp: 'in', value: T[] }
+type FilterExpression<T> = { exp: 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | 'in', value: any }
 type FilterExpressionList<T> = { [key in keyof T]?: null | FilterExpression<T[key]> } & { _q?: string }
 
 export type useCollectionDataOptions<T extends ApiObject> = {
