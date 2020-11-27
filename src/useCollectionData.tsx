@@ -15,11 +15,12 @@ export enum FilterFunctions {
 
 
 
-export const ne = value => value === undefined ? value : `ne|${JSON.stringify(value)}`
-export const gt = value => value === undefined ? value : `gt|${JSON.stringify(value)}`
-export const gte = value => value === undefined ? value : `gte|${JSON.stringify(value)}`
-export const lt = value => value === undefined ? value : `lt|${JSON.stringify(value)}`
-export const lte = value => value === undefined ? value : `lte|${JSON.stringify(value)}`
+export const ne = value => ['ne', value]
+export const gt = value => ['gt', value]
+export const gte = value => ['gte', value]
+export const lt = value => ['lt', value]
+export const lte = value => ['lte', value]
+export const in_array = (value: any[]) => ['in', value]
 
 export type ApiObject = {
   id: string
@@ -93,7 +94,10 @@ export const useCollectionData = <T extends ApiObject>(
         _limit: limit,
         _cursor: cursor,
         _fields: fields,
-        ...filters
+        ...Object.keys(filters).reduce((p, c) => {
+          p[c] = filters[c]?.length ? `${filters[c][0]}|${JSON.stringify(filters[c][1])}}` : filters[c]
+          return p
+        }, {})
       })
 
 
