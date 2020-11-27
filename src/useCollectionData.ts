@@ -17,12 +17,12 @@ export type ApiObject = {
   id: string
 }
 
-export const ne = <T>(value: T) => ['ne', value]
-export const gt = <T>(value: T) => ['gt', value]
-export const gte = <T>(value: T) => ['gte', value]
-export const lt = <T>(value: T) => ['lt', value]
-export const lte = <T>(value: T) => ['lte', value]
-export const in_array = <T>(value: T[]) => ['in', value]
+export const ne = <T>(value: T) => ['ne', value] as ['ne', T]
+export const gt = <T>(value: T) => ['gt', value] as ['gt', T]
+export const gte = <T>(value: T) => ['gte', value] as ['gte', T]
+export const lt = <T>(value: T) => ['lt', value] as ['lt', T]
+export const lte = <T>(value: T) => ['lte', value] as ['lte', T]
+export const in_array = <T>(value: T[]) => ['in', value] as ['in', T[]]
 
 
 
