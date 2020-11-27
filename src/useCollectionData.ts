@@ -42,7 +42,8 @@ type State<T> = {
 
 function filters_format<T>(filters: FilterExpressionList<T> = {}) {
   return Object.keys(filters).reduce((p, c) => {
-    p[c] = filters[c]?.exp ? filters[c] : { exp: 'eq', value: filters[c] }
+
+    p[c] = (filters[c]?.exp || c[0] == '_') ? filters[c] : { exp: 'eq', value: filters[c] }
     return p
   }, {}) as FilterExpressionResult<T>
 }
