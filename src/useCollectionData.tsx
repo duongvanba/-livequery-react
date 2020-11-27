@@ -65,7 +65,7 @@ export const useCollectionData = <T extends ApiObject>(
     error: null,
     has_more: false,
     cursor: null,
-    filters: options.where
+    filters: options.where || {}
   })
 
   const isLoading = useRef(false)
