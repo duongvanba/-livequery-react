@@ -1,10 +1,10 @@
-export { gt, gte, lt, lte, ne } from "./useCollectionData";
+export { gt, gte, lt, lte, ne } from "./queries/expressions";
 
-export { useAction } from "./useAction";
-export { useDeleteAction } from "./useDeleteAction";
-export { useCreateAction } from "./useCreateAction";
-export { useUpdateAction } from "./useUpdateAction";
+export { useAction } from "./actions/useAction";
+export { useDeleteAction } from "./actions/useDeleteAction";
+export { useCreateAction } from "./actions/useCreateAction";
+export { useUpdateAction } from "./actions/useUpdateAction";
 
 export { LiveQueryContextProvider } from "./LiveQueryContextProvider";
-export { useCollectionData } from "./useCollectionData";
-export { useDocumentData } from "./useDocumentData";
+export { useCollectionData } from "./queries/useCollectionData";
+export { useDocumentData } from "./queries/useDocumentData";

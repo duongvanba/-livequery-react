@@ -1,14 +1,13 @@
+
 import React from 'react'
 import { PropsWithChildren } from 'react'
 import { LiveQueryContext } from "./LiveQueryContext"
 
 
-
-
 export const LiveQueryContextProvider = (props: PropsWithChildren<LiveQueryContext>) => {
-  const { children, ...request_options } = props
+  const { children, ... options   } = props
   return (
-    <LiveQueryContext.Provider value={request_options}>
+    <LiveQueryContext.Provider value={options}>
       {children}
     </LiveQueryContext.Provider>
   )

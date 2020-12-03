@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect } from 'react'
-import { LiveQueryContext } from './LiveQueryContext'
-import { request } from './request'
+import { LiveQueryContext } from '../LiveQueryContext'
+import { Request } from '../request'
 
 type ActionState<T> = {
     data: T,
@@ -25,7 +25,14 @@ export function useAction<RequestDataType, ResultDataType = any>(
     async function excute(payload: RequestDataType, query: any = {}) {
         setState({ data: null, error: null, loading: true })
         try {
-            const data = await request(ctx, ref, method, query, payload)
+            const options = await ctx.options()
+            const data = await Request<ResultDataType>({
+                uri: ref,
+                method,
+                query,
+                json: payload,
+                ...options
+            })
             mounting && setState({ data, error: null, loading: false })
             handler && handler(data, null, payload)
             return data as ResultDataType
@@ -35,7 +42,6 @@ export function useAction<RequestDataType, ResultDataType = any>(
             throw error
         }
     }
-
 
     useEffect(() => () => mounting = false, [])
 

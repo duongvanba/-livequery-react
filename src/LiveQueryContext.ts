@@ -1,10 +1,6 @@
-import { createContext } from 'react'
+import { createContext } from 'react' 
+import { RequestOptions } from './request/Request'
 
-
-
-export type RequestConfig = RequestInit & { base_url?: string }
-
-
-
-export type LiveQueryContext = { options?: () => Promise<RequestConfig> | RequestConfig }
-export const LiveQueryContext = createContext<LiveQueryContext>({})
+export type LiveQueryContext = { options?: () => Promise<Partial<RequestOptions>> }
+export const LiveQueryContext = createContext<LiveQueryContext>({}) 
+ 
