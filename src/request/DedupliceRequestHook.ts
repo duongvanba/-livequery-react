@@ -35,8 +35,7 @@ export const DedupliceRequestHook: RequestHook = {
 
         if (options.method.toLowerCase() == 'get' && PendingRequest.has(id)) {
             PendingRequest.get(id).resolve(response.clone())
-            PendingRequest.delete(id)
-            return response.clone()
+            PendingRequest.delete(id) 
         }
     },
 

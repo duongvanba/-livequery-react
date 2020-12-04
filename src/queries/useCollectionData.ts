@@ -24,6 +24,7 @@ export const useCollectionData = <T extends Entity>(
   ref: string,
   options: Partial<useCollectionDataOptions<T>> = {}
 ) => {
+
   const refs = ref?.split('/') || []
   const isCollection = refs.length % 2 == 1
   const ctx = useContext(LiveQueryContext)
@@ -40,12 +41,12 @@ export const useCollectionData = <T extends Entity>(
     loading: true,
     error: null,
     has_more: false,
-    cursor: null,
+    cursor: `${~~(Math.random() * 100)}`,
     filters: formatFilters(options.where)
   })
 
 
-
+  console.log("Re-render", { error, loading, cursor, has_more, items, filters })
 
 
   // Fetch data
@@ -80,15 +81,16 @@ export const useCollectionData = <T extends Entity>(
       if (isCollection) {
 
         const { data } = await Request(request_options)
+        console.log({ data })
 
         setState(s => {
-          const items = [...s.items, ...data.items]
+          const items = [...s.items, ...data?.items || []]
           return {
             ...s,
-            cursor: data.cursor,
+            cursor: data?.cursor || null,
             items,
             error: null,
-            has_more: data.has_more,
+            has_more: data?.has_more || false,
             loading: false
           }
         })
@@ -96,12 +98,13 @@ export const useCollectionData = <T extends Entity>(
         // If not colleciton
       } else {
         const item = await Request<T>(request_options)
-        setState(s => ({ ...s, items: [item] }))
-        
+        setState(s => ({ ...s, items: item ? [item] : [] }))
+
       }
 
-    } catch (error) { 
-      setState(s => ({ ...s, error, loading: false }))  
+    } catch (error) {
+      console.log('Loi ne', error)
+      setState(s => ({ ...s, error, loading: false }))
     }
     loading_more.current = false
   }
@@ -120,7 +123,7 @@ export const useCollectionData = <T extends Entity>(
     fetch_more: () => fetch_data({ ...filters, _cursor: cursor }, options.cache),
     filter: (filters) => fetch_data(filters, options.cache),
     has_more,
-    empty: items.length == 0 && !loading,
+    empty: items.length == 0 && !loading && !error,
     filters
   }
 }

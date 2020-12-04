@@ -39,9 +39,10 @@ export async function Request<T>(opts: RequestOptions) {
         if (data !== undefined) return data
     }
 
+    let response 
     try {
         const query = options.query && stringify(options.query)
-        const response = await fetch(`${options.prefix || ''}${options.uri}?${query}`, {
+        response = await fetch(`${options.prefix || ''}${options.uri}?${query}`, {
             body: run(() => {
                 if (options.json) return JSON.stringify(options.json)
                 if (options.form) return stringify(options.form)
@@ -54,19 +55,23 @@ export async function Request<T>(opts: RequestOptions) {
                 }),
                 ...options.headers
             }
-        }) 
+        })
 
-        for (const hook of hooks) {
-            const data = hook.onResponse ? await hook.onResponse(options, response.clone()) : undefined
-            if (data !== undefined) return data
-        }
 
-        return await response?.json() as T
-    } catch (e) { 
+    } catch (e) {
         for (const hook of hooks) {
             const data = hook.onNetworkError ? await hook.onNetworkError(options) : undefined
             if (data !== undefined) return data
         }
-        throw e 
+        throw e
     }
+
+    for (const hook of hooks) {
+        const data = hook.onResponse ? await hook.onResponse(options, response.clone()) : undefined
+        if (data !== undefined) return data
+    }
+
+    const data = await response?.json() as T
+    if (response.ok) return data
+    if (!response.ok) throw data
 }
