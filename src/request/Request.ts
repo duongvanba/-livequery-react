@@ -24,10 +24,10 @@ export class RequestHook {
     onNetworkError?(options: RequestOptions): Promise<any> | any | void { }
 }
 
-export async function Request<T>(doptions: RequestOptions) {
+export async function Request<T>(opts: RequestOptions) {
     const options = {
         method: 'get',
-        ...doptions
+        ...opts
     }
     const hooks = [
         RequestCacheHook,
@@ -67,5 +67,6 @@ export async function Request<T>(doptions: RequestOptions) {
             const data = hook.onNetworkError ? await hook.onNetworkError(options) : undefined
             if (data !== undefined) return data
         }
+        throw e 
     }
 }
