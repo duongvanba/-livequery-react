@@ -23,25 +23,20 @@ export const DedupliceRequestHook: RequestHook = {
     beforeRequest: async (options: RequestOptions) => {
 
         if (options.method.toLowerCase() == 'get') {
-            const id = get_request_id(options)
-            if (PendingRequest.has(id)) return await PendingRequest.get(id).promise
-            PendingRequest.set(id, new Deferred())
+            if (PendingRequest.has(options.url)) return await PendingRequest.get(options.url).promise
+            PendingRequest.set(options.url, new Deferred())
         }
     },
 
     onResponse: (options: RequestOptions, response: Response) => {
-
-        const id = get_request_id(options)
-
-        if (options.method.toLowerCase() == 'get' && PendingRequest.has(id)) {
-            PendingRequest.get(id).resolve(response.clone())
-            PendingRequest.delete(id) 
+        if (options.method.toLowerCase() == 'get' && PendingRequest.has(options.url)) {
+            PendingRequest.get(options.url).resolve(response.clone())
+            PendingRequest.delete(options.url)
         }
     },
 
     // Hàm này em
     onNetworkError(options: RequestOptions) {
-        const id = get_request_id(options)
-        PendingRequest.delete(id)
+        PendingRequest.delete(options.url)
     }
 } 

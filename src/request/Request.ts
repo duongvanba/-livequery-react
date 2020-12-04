@@ -1,5 +1,6 @@
 import { stringify } from "query-string"
 import { DedupliceRequestHook } from "./DedupliceRequestHook"
+import { FormatHook } from "./FormatHook"
 import { RequestCacheHook } from "./RequestCacheHook"
 import { RetryHook } from "./RetryHook"
 
@@ -11,6 +12,7 @@ export type CacheOption = { use?: boolean, update?: boolean }
 export type RequestOptions = RequestInit & {
     prefix?: string
     uri: string
+    url?: string
     form?: any,
     json?: any
     retry?: number
@@ -24,54 +26,46 @@ export class RequestHook {
     onNetworkError?(options: RequestOptions): Promise<any> | any | void { }
 }
 
-export async function Request<T>(opts: RequestOptions) {
+export async function Request<T>(opts: RequestOptions & { hooks?: RequestHook[] }) {
+
     const options = {
         method: 'get',
+        headers: {
+            ...opts.headers || {}
+        },
         ...opts
     }
     const hooks = [
-        RequestCacheHook,
+        FormatHook,
         DedupliceRequestHook,
-        RetryHook
+        RequestCacheHook,
+        RetryHook,
+        ...options.hooks || []
     ]
+
+    let response = null
+    const used_hooks = []
     for (const hook of hooks) {
-        const data = hook.beforeRequest ? await hook.beforeRequest(options) : undefined
-        if (data !== undefined) return data
+        if (hook.beforeRequest) response = await hook.beforeRequest(options)
+        if (response) break
+        used_hooks.unshift(hook)
     }
 
-    let response 
-    try {
-        const query = options.query && stringify(options.query)
-        response = await fetch(`${options.prefix || ''}${options.uri}?${query}`, {
-            body: run(() => {
-                if (options.json) return JSON.stringify(options.json)
-                if (options.form) return stringify(options.form)
-            }),
-            ...options,
-            headers: {
-                'Content-Type': run(() => {
-                    if (options.json) return 'application/json'
-                    if (options.form) return 'application/x-www-form-urlencoded'
-                }),
-                ...options.headers
+    if (!response) {
+        try {
+            response = await fetch(options.url, options)
+        } catch (e) {
+            for (const hook of used_hooks) {
+                if (hook.onNetworkError) response = hook.onNetworkError(options)
+                if (response) break
             }
-        })
-
-
-    } catch (e) {
-        for (const hook of hooks) {
-            const data = hook.onNetworkError ? await hook.onNetworkError(options) : undefined
-            if (data !== undefined) return data
+            if (!response) throw e
         }
-        throw e
     }
 
-    for (const hook of hooks) {
-        const data = hook.onResponse ? await hook.onResponse(options, response.clone()) : undefined
-        if (data !== undefined) return data
+    for (const hook of used_hooks) {
+        if (hook.onResponse) response = hook.onResponse(options, response.clone()) || response
     }
 
-    const data = await response?.json() as T
-    if (response.ok) return data
-    if (!response.ok) throw data
+    return response as T
 }
