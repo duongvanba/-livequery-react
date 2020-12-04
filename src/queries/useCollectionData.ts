@@ -41,12 +41,9 @@ export const useCollectionData = <T extends Entity>(
     loading: true,
     error: null,
     has_more: false,
-    cursor: `${~~(Math.random() * 100)}`,
+    cursor: null,
     filters: formatFilters(options.where)
   })
-
-
-  console.log("Re-render", { error, loading, cursor, has_more, items, filters })
 
 
   // Fetch data
@@ -57,6 +54,7 @@ export const useCollectionData = <T extends Entity>(
     filters: FilterExpressionList<T> = {},
     cache_config: CacheOption = {}
   ) {
+
     if (loading_more.current) return
     loading_more.current = true
 
@@ -81,7 +79,6 @@ export const useCollectionData = <T extends Entity>(
       if (isCollection) {
 
         const { data } = await Request(request_options)
-        console.log({ data })
 
         setState(s => {
           const items = [...s.items, ...data?.items || []]
@@ -99,12 +96,11 @@ export const useCollectionData = <T extends Entity>(
       } else {
         const item = await Request<T>(request_options)
         setState(s => ({ ...s, items: item ? [item] : [] }))
+      } 
 
-      }
-
-    } catch (error) {
-      console.log('Loi ne', error)
+    } catch (error) {   
       setState(s => ({ ...s, error, loading: false }))
+      console.error(error)
     }
     loading_more.current = false
   }
