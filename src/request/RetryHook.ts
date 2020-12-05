@@ -4,18 +4,23 @@ import { Request, RequestHook, RequestOptions } from "./Request";
 
 export const RetryHook: RequestHook = {
 
-    onResponse(options, response) {
+    async onResponse(options, response) {
         if (!response.ok && response.status >= 500 && options.retry > 0) {
-            options.retry--
-            return Request(options)
+            for (let i = 1; i <= options.retry; i++) {
+                try {
+                    return await fetch(options.url, options)
+                } catch (e) { }
+            }
         }
     },
 
-    onNetworkError(options: RequestOptions) {
+    async onNetworkError(options: RequestOptions) {
 
-        if (options.retry > 0) {
-            options.retry--
-            return Request(options)
+        for (let i = 1; i <= options.retry; i++) {
+            try {
+                return await fetch(options.url, options)
+            } catch (e) { }
         }
+
     }
 }

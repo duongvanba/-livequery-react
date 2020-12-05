@@ -1,4 +1,3 @@
-import { get_request_id } from "./get_request_id"
 import { RequestHook, RequestOptions } from "./Request"
 
 

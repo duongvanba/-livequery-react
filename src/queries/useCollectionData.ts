@@ -3,7 +3,6 @@ import { FilterExpressionList, FilterExpressionResult } from "./expressions"
 import { Entity } from "./Entity"
 import { LiveQueryContext } from "../LiveQueryContext"
 import { formatFilters } from "./formatFilters"
-import { omitUndefined } from "../helpers/omitUndefined"
 import { buildFilters } from "./buildFilters"
 import { CacheOption, Request, RequestOptions } from "../request/Request"
 
@@ -16,7 +15,7 @@ export type useCollectionDataOptions<T extends Entity> = {
   where: FilterExpressionList<T>
   fields: string
   reatime: boolean | Function,
-  cache: CacheOption
+  cache: CacheOption | true
 }
 
 
@@ -28,6 +27,7 @@ export const useCollectionData = <T extends Entity>(
   const refs = ref?.split('/') || []
   const isCollection = refs.length % 2 == 1
   const ctx = useContext(LiveQueryContext)
+  const cache_options = options.cache == true ? { update: true, use: true } : options.cache
 
   const [{ error, loading, cursor, has_more, items, filters }, setState] = useState<{
     items: T[],
@@ -62,16 +62,14 @@ export const useCollectionData = <T extends Entity>(
 
       setState(s => ({ ...s, error: null, loading: true, filters: formatFilters(filters) }))
 
-      const query = omitUndefined({
-        _limit: options.limit,
-        _fields: options.fields,
-        ...buildFilters<T>(filters),
-      })
-
       const request_options: RequestOptions = {
         uri: ref,
-        Vcache: cache_config || options.cache,
-        query,
+        Vcache: cache_config || cache_options,
+        query: {
+          _limit: options.limit,
+          _fields: options.fields,
+          ...buildFilters<T>(filters),
+        },
         ...await ctx.options()
       }
 
@@ -96,9 +94,9 @@ export const useCollectionData = <T extends Entity>(
       } else {
         const item = await Request<T>(request_options)
         setState(s => ({ ...s, items: item ? [item] : [] }))
-      } 
+      }
 
-    } catch (error) {   
+    } catch (error) {
       setState(s => ({ ...s, error, loading: false }))
       console.error(error)
     }
@@ -106,7 +104,7 @@ export const useCollectionData = <T extends Entity>(
   }
 
   useEffect(() => {
-    ref && fetch_data({}, options.cache)
+    ref && fetch_data({}, cache_options)
   }, [ref])
 
 
@@ -116,8 +114,8 @@ export const useCollectionData = <T extends Entity>(
     error,
     reload: () => fetch_data(filters, {}),
     reset: () => fetch_data({}),
-    fetch_more: () => fetch_data({ ...filters, _cursor: cursor }, options.cache),
-    filter: (filters) => fetch_data(filters, options.cache),
+    fetch_more: () => fetch_data({ ...filters, _cursor: cursor }, cache_options),
+    filter: (filters) => fetch_data(filters, cache_options),
     has_more,
     empty: items.length == 0 && !loading && !error,
     filters

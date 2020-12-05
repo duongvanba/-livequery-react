@@ -56,15 +56,16 @@ export async function Request<T>(opts: RequestOptions & { hooks?: RequestHook[] 
             response = await fetch(options.url, options)
         } catch (e) {
             for (const hook of used_hooks) {
-                if (hook.onNetworkError) response = hook.onNetworkError(options)
+                if (hook.onNetworkError) response = await hook.onNetworkError(options)
                 if (response) break
             }
             if (!response) throw e
+
         }
     }
 
     for (const hook of used_hooks) {
-        if (hook.onResponse) response = hook.onResponse(options, response.clone()) || response
+        if (hook.onResponse) response = await hook.onResponse(options, response.clone()) || response
     }
 
     return response as T
