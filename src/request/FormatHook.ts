@@ -16,12 +16,12 @@ export const FormatHook: RequestHook = {
 
         if (options.json) {
             options.body = JSON.stringify(options.json)
-            options.headers['Cotent-Type'] = 'application/json'
+            options.headers['Content-Type'] = 'application/json'
         }
 
         if (options.form) {
             options.body = JSON.stringify(options.json)
-            options.headers['Cotent-Type'] = 'application/x-www-form-urlencoded'
+            options.headers['Content-Type'] = 'application/x-www-form-urlencoded'
         }
     },
 
