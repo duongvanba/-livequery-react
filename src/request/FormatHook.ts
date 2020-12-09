@@ -31,7 +31,7 @@ export const FormatHook: RequestHook = {
         try {
             data = await response?.json()
         } catch (e) {
-            throw new Error('Response is not a vaild JSON string')
+            return {}
         }
 
         if (response.ok) return data

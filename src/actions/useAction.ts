@@ -8,7 +8,7 @@ type ActionState<T> = {
     error?: { message: string, [key: string]: any }
 }
 
-export function useAction<RequestDataType, ResultDataType = any>(
+export function useAction<RequestDataType = void, ResultDataType = any>(
     ref: string,
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'GET' = 'POST',
     handler?: (data: ResultDataType, error: any, req: RequestDataType) => any
@@ -22,7 +22,7 @@ export function useAction<RequestDataType, ResultDataType = any>(
     const [{ data, error, loading }, setState] = useState<ActionState<ResultDataType>>({ data: null, error: null, loading: false })
 
 
-    async function excute(payload: RequestDataType, query: any = {}) {
+    async function excute(payload?: RequestDataType, query?: any) {
         setState({ data: null, error: null, loading: true })
         try {
             const options = await ctx.options()
@@ -38,7 +38,7 @@ export function useAction<RequestDataType, ResultDataType = any>(
             return data as ResultDataType
         } catch (error) {
             mounting && setState({ data: null, error, loading: false })
-            handler && handler(null, error, payload) 
+            handler && handler(null, error, payload)
         }
     }
 
