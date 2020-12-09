@@ -51,7 +51,8 @@ export const useCollectionData = <T extends Entity>(
 
   async function fetch_data(
     query_filters: FilterExpressionList<T> = {},
-    cache_config: CacheOption = (options.cache == true ? { update: true, use: true } : options.cache)
+    cache_config: CacheOption = (options.cache == true ? { update: true, use: true } : options.cache),
+    flush: boolean = true
   ) {
 
     if (loading_more.current) return
@@ -59,7 +60,7 @@ export const useCollectionData = <T extends Entity>(
 
     try {
       const filters = formatFilters(query_filters)
-      setState(s => ({ ...s, error: null, loading: true, filters }))
+      setState(s => ({ ...s, error: null, loading: true, filters, items: flush ? [] : s.items }))
 
 
       const opts = await ctx.options()
@@ -116,7 +117,7 @@ export const useCollectionData = <T extends Entity>(
     error,
     reload: () => fetch_data(filters, {}),
     reset: () => fetch_data({}),
-    fetch_more: () => fetch_data({ ...filters, _cursor: cursor }),
+    fetch_more: () => fetch_data({ ...filters, _cursor: cursor }, undefined, false),
     filter: (filters) => fetch_data(filters, {}),
     has_more,
     empty: items.length == 0 && !loading && !error,
