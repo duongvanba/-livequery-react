@@ -1,4 +1,5 @@
 import { stringify } from "query-string"
+import { FilterExpressionList } from "../queries/expressions"
 import { DedupliceRequestHook } from "./DedupliceRequestHook"
 import { FormatHook } from "./FormatHook"
 import { RequestCacheHook } from "./RequestCacheHook"
@@ -36,11 +37,11 @@ export async function Request<T>(opts: RequestOptions & { hooks?: RequestHook[] 
         ...opts
     }
     const hooks = [
+        ...options.hooks || [],
         FormatHook,
         DedupliceRequestHook,
         RequestCacheHook,
         RetryHook,
-        ...options.hooks || []
     ]
 
     let response = null

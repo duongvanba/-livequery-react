@@ -3,8 +3,8 @@ import { FilterExpressionList, FilterExpressionResult } from "./expressions"
 import { Entity } from "./Entity"
 import { LiveQueryContext } from "../LiveQueryContext"
 import { formatFilters } from "./formatFilters"
-import { buildFilters } from "./buildFilters"
-import { CacheOption, Request, RequestOptions } from "../request/Request"
+import { FiltersBuilderHook } from "./FiltersBuilderHook"
+import { CacheOption, Request, RequestHook, RequestOptions } from "../request/Request"
 
 
 
@@ -27,7 +27,6 @@ export const useCollectionData = <T extends Entity>(
   const refs = ref?.split('/') || []
   const isCollection = refs.length % 2 == 1
   const ctx = useContext(LiveQueryContext)
-  const cache_options = options.cache == true ? { update: true, use: true } : options.cache
 
   const [{ error, loading, cursor, has_more, items, filters }, setState] = useState<{
     items: T[],
@@ -51,31 +50,34 @@ export const useCollectionData = <T extends Entity>(
 
 
   async function fetch_data(
-    filters: FilterExpressionList<T> = {},
-    cache_config: CacheOption = {}
+    query_filters: FilterExpressionList<T> = {},
+    cache_config: CacheOption = (options.cache == true ? { update: true, use: true } : options.cache)
   ) {
 
     if (loading_more.current) return
     loading_more.current = true
 
     try {
+      const filters = formatFilters(query_filters)
+      setState(s => ({ ...s, error: null, loading: true, filters }))
 
-      setState(s => ({ ...s, error: null, loading: true, filters: formatFilters(filters) }))
 
-      const request_options: RequestOptions = {
+      const opts = await ctx.options()
+      const request_options: RequestOptions & { hooks: RequestHook[] } = {
+        ...opts,
         uri: ref,
-        Vcache: cache_config || cache_options,
+        Vcache: cache_config,
         query: {
           _limit: options.limit,
           _fields: options.fields,
-          ...buildFilters<T>(filters),
+          ...filters as any,
+          ...opts.query || {}
         },
-        ...await ctx.options()
+        hooks: [FiltersBuilderHook]
       }
 
       // If collection
       if (isCollection) {
-
         const { data } = await Request(request_options)
 
         setState(s => {
@@ -104,7 +106,7 @@ export const useCollectionData = <T extends Entity>(
   }
 
   useEffect(() => {
-    ref && fetch_data({}, cache_options)
+    ref && fetch_data(options.where)
   }, [ref])
 
 
@@ -114,8 +116,8 @@ export const useCollectionData = <T extends Entity>(
     error,
     reload: () => fetch_data(filters, {}),
     reset: () => fetch_data({}),
-    fetch_more: () => fetch_data({ ...filters, _cursor: cursor }, cache_options),
-    filter: (filters) => fetch_data(filters, cache_options),
+    fetch_more: () => fetch_data({ ...filters, _cursor: cursor }),
+    filter: (filters) => fetch_data(filters, {}),
     has_more,
     empty: items.length == 0 && !loading && !error,
     filters
