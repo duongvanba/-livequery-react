@@ -8,7 +8,7 @@ type ActionState<T> = {
     error?: { message: string, [key: string]: any }
 }
 
-export function useAction<RequestDataType = void, ResultDataType = any>(
+export function useAction<RequestDataType = void | any, ResultDataType = any>(
     ref: string,
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'GET' = 'POST',
     handler?: (data: ResultDataType, error: any, req: RequestDataType) => any
