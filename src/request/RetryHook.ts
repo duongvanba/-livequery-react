@@ -5,7 +5,7 @@ import { Request, RequestHook, RequestOptions } from "./Request";
 export const RetryHook: RequestHook = {
 
     async onResponse(options, response) {
-        if (!response.ok && response.status >= 500 && options.retry > 0) {
+        if (options.method.toLowerCase() == 'get' && !response.ok && response.status >= 500 && options.retry > 0) {
             for (let i = 1; i <= options.retry; i++) {
                 try {
                     return await fetch(options.url, options)
@@ -15,7 +15,7 @@ export const RetryHook: RequestHook = {
     },
 
     async onNetworkError(options: RequestOptions) {
-
+        if (options.method.toLowerCase() != 'get') return
         for (let i = 1; i <= options.retry; i++) {
             try {
                 return await fetch(options.url, options)
