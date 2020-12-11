@@ -39,6 +39,7 @@ export function useAction<RequestDataType = void | any, ResultDataType = any>(
         } catch (error) {
             mounting && setState({ data: null, error, loading: false })
             handler && handler(null, error, payload)
+            throw error
         }
     }
 
