@@ -147,8 +147,12 @@ export const useCollectionData = <T extends Entity>(
   const reload = () => fetch_data(filters, {})
 
   useEffect(() => {
-    ctx.on('re-connected', reload)
-    return () => ctx.off('re-connected', reload)
+    const handler = (n: number) => {
+      if (!ref || (n == 0 && !error)) return 
+      reload()
+    }
+    ctx.on('connected', handler)
+    return () => ctx.off('connected', handler)
   })
 
   return {

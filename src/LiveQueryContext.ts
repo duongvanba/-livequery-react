@@ -32,14 +32,12 @@ export class LiveQuery extends EventEmitter {
     ) {
         super()
         this.init()
+        console.log('Init websocket')
     }
 
     private update_connection_info(evt: SocketEvent<{ id: string }>) {
         this.socket_connection_id = evt.id
-        if (this.connected_amount > 0) {
-            console.log('Reconnect')
-            this.emit('re-connected')
-        }
+        this.emit('connected', this.connected_amount)
         this.connected_amount++
     }
 
@@ -66,7 +64,7 @@ export class LiveQuery extends EventEmitter {
 
             // Message handler
             this.websocket.addEventListener('open', () => {
-                console.log('Server connected')
+                console.log('Websocket connected')
                 this.websocket.addEventListener('message', msg => {
                     this.message_handler(JSON.parse(msg.data))
                 })
@@ -74,7 +72,7 @@ export class LiveQuery extends EventEmitter {
 
             // Wait connection close
             await new Promise(s => this.websocket.addEventListener('close', s))
-            console.log('Socket close, retry in 3s ...')
+            console.log('Socket closed, reconnect in 3s ...')
             await new Promise(s => setTimeout(s, 3000))
         }
     }

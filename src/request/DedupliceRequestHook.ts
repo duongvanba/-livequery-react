@@ -22,7 +22,9 @@ export const DedupliceRequestHook: RequestHook = {
     beforeRequest: async (options: RequestOptions) => {
 
         if (options.method.toLowerCase() == 'get') {
-            if (PendingRequest.has(options.url)) return await PendingRequest.get(options.url).promise
+            if (PendingRequest.has(options.url)) {
+                return await PendingRequest.get(options.url).promise
+            }
             PendingRequest.set(options.url, new Deferred())
         }
     },
@@ -34,8 +36,8 @@ export const DedupliceRequestHook: RequestHook = {
         }
     },
 
-    // Hàm này em
     onNetworkError(options: RequestOptions) {
+        PendingRequest.get(options.url)?.reject({ message: 'Network error' })
         PendingRequest.delete(options.url)
     }
 } 
