@@ -20,10 +20,11 @@ export const useCollectionData = <T extends Entity>(
   ref: string,
   options: Partial<useCollectionDataOptions<T>> = {}
 ) => {
+
+
   const ctx = useContext(LiveQueryContext)
   const refs = ref?.split('?')[0].split('/') || []
   const isCollection = refs.length % 2 == 1
-
 
   const [{ error, loading, cursor, has_more, items, filters }, setState] = useState<{
     items: T[],
@@ -110,8 +111,6 @@ export const useCollectionData = <T extends Entity>(
   }
 
   const realtime_sync = ({ items }: { items: RealtimeUpdateItem[] }) => setState(s => {
-
-
     const updated_items = items.reduce((p, c) => (
       c.type == 'modified' && c.data.id && p.set(c.data.id, c.data),
       p
@@ -132,15 +131,17 @@ export const useCollectionData = <T extends Entity>(
 
 
   useEffect(() => {
-    if (options.reatime == false || !ref) return 
+
+    // Fetch
+    if (!ref) return
+    fetch_data(options.where)
+
+    // Socket
+    if (options.reatime == false) return
     const path = ref.split('?')[0].replace(/^\/+|\/+$/g, '')
     ctx.subcribe(path, realtime_sync)
     return () => ctx.unsubcribe(path, realtime_sync)
-  }, [ref])
 
-
-  useEffect(() => {
-    ref && fetch_data(options.where)
   }, [ref])
 
   const reload = () => fetch_data(filters, {})
@@ -149,7 +150,6 @@ export const useCollectionData = <T extends Entity>(
     ctx.on('re-connected', reload)
     return () => ctx.off('re-connected', reload)
   })
-
 
   return {
     items,

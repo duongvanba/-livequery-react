@@ -36,7 +36,11 @@ export class LiveQuery extends EventEmitter {
 
     private update_connection_info(evt: SocketEvent<{ id: string }>) {
         this.socket_connection_id = evt.id
-        if (this.connected_amount > 0) this.emit('re-connected')
+        if (this.connected_amount > 0) {
+            console.log('Reconnect')
+            this.emit('re-connected')
+        }
+        this.connected_amount++
     }
 
     private realtime_update(evt: RealtimeUpdate) {
@@ -63,7 +67,6 @@ export class LiveQuery extends EventEmitter {
             // Message handler
             this.websocket.addEventListener('open', () => {
                 console.log('Server connected')
-                this.connected_amount++
                 this.websocket.addEventListener('message', msg => {
                     this.message_handler(JSON.parse(msg.data))
                 })
