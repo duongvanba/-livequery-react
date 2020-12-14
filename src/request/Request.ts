@@ -1,23 +1,18 @@
-import { stringify } from "query-string"
-import { FilterExpressionList } from "../queries/expressions"
 import { DedupliceRequestHook } from "./DedupliceRequestHook"
 import { FormatHook } from "./FormatHook"
 import { RequestCacheHook } from "./RequestCacheHook"
 import { RetryHook } from "./RetryHook"
 
-
-const run = (fn: Function) => fn()
-
 export type CacheOption = { use?: boolean, update?: boolean }
 
-export type RequestOptions = RequestInit & {
+export type RequestOptions = Omit<RequestInit, "cache"> & {
     prefix?: string
     uri: string
     url?: string
     form?: any,
     json?: any
     retry?: number
-    Vcache?: CacheOption,
+    cache?: CacheOption,
     query?: { [key: string]: number | string | boolean }
 }
 
@@ -54,7 +49,8 @@ export async function Request<T>(opts: RequestOptions & { hooks?: RequestHook[] 
 
     if (!response) {
         try {
-            response = await fetch(options.url, options)
+            const { cache, ...opts } = options
+            response = await fetch(options.url, opts)
         } catch (e) {
             for (const hook of used_hooks) {
                 if (hook.onNetworkError) response = await hook.onNetworkError(options)

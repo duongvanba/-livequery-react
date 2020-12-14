@@ -8,7 +8,8 @@ export const RetryHook: RequestHook = {
         if (options.method.toLowerCase() == 'get' && !response.ok && response.status >= 500 && options.retry > 0) {
             for (let i = 1; i <= options.retry; i++) {
                 try {
-                    return await fetch(options.url, options)
+                    const { cache, ...opts } = options
+                    return await fetch(options.url, opts)
                 } catch (e) { }
             }
         }
@@ -18,7 +19,8 @@ export const RetryHook: RequestHook = {
         if (options.method.toLowerCase() != 'get') return
         for (let i = 1; i <= options.retry; i++) {
             try {
-                return await fetch(options.url, options)
+                const { cache, ...opts } = options
+                return await fetch(options.url, opts)
             } catch (e) { }
         }
 

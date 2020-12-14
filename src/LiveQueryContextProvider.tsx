@@ -1,13 +1,25 @@
 
 import React from 'react'
 import { PropsWithChildren } from 'react'
-import { LiveQueryContext } from "./LiveQueryContext"
+import { LiveQuery, LiveQueryContext } from "./LiveQueryContext"
+import { RequestOptions } from './request/Request'
 
 
-export const LiveQueryContextProvider = (props: PropsWithChildren<LiveQueryContext>) => {
-  const { children, ... options   } = props
+export type LiveQueryContextProvider = {
+  options?: () => Promise<Partial<RequestOptions>>
+  websocket_url?: string 
+}
+
+export const LiveQueryContextProvider = (props: PropsWithChildren<LiveQueryContextProvider>) => {
+  const { children, websocket_url, options } = props
+
+  const livequery = new LiveQuery(
+    options,
+    websocket_url
+  )
+
   return (
-    <LiveQueryContext.Provider value={options}>
+    <LiveQueryContext.Provider value={livequery}>
       {children}
     </LiveQueryContext.Provider>
   )
