@@ -32,7 +32,6 @@ export class LiveQuery extends EventEmitter {
     ) {
         super()
         this.init()
-        console.log('Init websocket')
     }
 
     private update_connection_info(evt: SocketEvent<{ id: string }>) {
@@ -59,6 +58,9 @@ export class LiveQuery extends EventEmitter {
 
     async init() {
         if (!this.websocket_url || typeof WebSocket == 'undefined') return
+
+
+        console.log('Init websocket')
         while (true) {
             this.websocket = new WebSocket(this.websocket_url)
 
