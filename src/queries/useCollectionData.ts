@@ -26,6 +26,7 @@ function useMutex() {
 }
 
 function getRealtimeRef(ref: string) {
+  if(!ref) return {}
   const trimedRef = ref.split('?')[0].replace(/^\/+|\/+$/g, '')
   const refs = trimedRef.split('/')
   const isCollection = refs.length % 2 == 1
