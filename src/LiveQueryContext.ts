@@ -77,21 +77,7 @@ export class LiveQuery extends EventEmitter {
             console.log('Socket closed, reconnect in 3s ...')
             await new Promise(s => setTimeout(s, 3000))
         }
-    }
-
-    unsubcribe(ref: string, handler: (...args: any[]) => void) {
-        try {
-            this.websocket?.send(
-                JSON.stringify({ event: 'unsubscribe', data: { ref } })
-            )
-        } catch (e) { }
-        this.off(ref, handler)
-    }
-
-    subcribe(ref: string, handler: (...args: any[]) => void) {
-        this.on(ref, handler)
-    }
-
+    } 
 
 }
 

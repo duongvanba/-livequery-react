@@ -15,6 +15,23 @@ export type useCollectionDataOptions<T extends Entity> = {
   cache: CacheOption | true
 }
 
+function useMutex() {
+  const mutex = useRef(false)
+
+  return {
+    locking: mutex.current,
+    lock: () => mutex.current = true,
+    unlock: () => mutex.current = false
+  }
+}
+
+function getRealtimeRef(ref: string) {
+  const trimedRef = ref.split('?')[0].replace(/^\/+|\/+$/g, '')
+  const refs = trimedRef.split('/')
+  const isCollection = refs.length % 2 == 1
+  const realtimeRef = refs.slice(0, refs.length - (isCollection ? 0 : 1)).join('/')
+  return { realtimeRef, isCollection }
+}
 
 export const useCollectionData = <T extends Entity>(
   ref: string,
@@ -23,9 +40,9 @@ export const useCollectionData = <T extends Entity>(
 
 
   const ctx = useContext(LiveQueryContext)
-  const refs = ref?.split('?')[0].split('/') || []
-  const isCollection = refs.length % 2 == 1
+  const { isCollection, realtimeRef } = getRealtimeRef(ref)
 
+  // Hook main state
   const [{ error, loading, cursor, has_more, items, filters }, setState] = useState<{
     items: T[],
     loading: boolean,
@@ -43,18 +60,16 @@ export const useCollectionData = <T extends Entity>(
   })
 
 
-  // Fetch data
-  const loading_more = useRef(false)
-
-
+  // Fetch data 
+  const PreventDuplicateMutex = useMutex()
   async function fetch_data(
     query_filters: FilterExpressionList<T> = {},
     cache_config: CacheOption = (options.cache == true ? { update: true, use: true } : options.cache),
     flush: boolean = true
   ) {
 
-    if (loading_more.current) return
-    loading_more.current = true
+    if (PreventDuplicateMutex.locking) return
+    PreventDuplicateMutex.lock()
 
     try {
       const filters = formatFilters(query_filters)
@@ -107,9 +122,10 @@ export const useCollectionData = <T extends Entity>(
       setState(s => ({ ...s, error, loading: false }))
       console.error(error)
     }
-    loading_more.current = false
+    PreventDuplicateMutex.unlock()
   }
 
+  // Sync data realtime
   const realtime_sync = ({ items }: { items: RealtimeUpdateItem[] }) => setState(s => {
     const updated_items = items.reduce((p, c) => (
       c.type == 'modified' && c.data.id && p.set(c.data.id, c.data),
@@ -130,26 +146,29 @@ export const useCollectionData = <T extends Entity>(
   })
 
 
+  // Load data & realtime update listener
   useEffect(() => {
-
     // Fetch
     if (!ref) return
     fetch_data(options.where)
 
     // Socket
-    if (options.reatime == false) return
-    const path = ref.split('?')[0].replace(/^\/+|\/+$/g, '')
-    ctx.subcribe(path, realtime_sync)
-    return () => ctx.unsubcribe(path, realtime_sync)
-
+    if (options.reatime != false) {
+      ctx.on(realtimeRef, realtime_sync)
+      return () => ctx.off(realtimeRef, realtime_sync)
+    }
   }, [ref])
 
-  const reload = () => fetch_data(filters, {})
 
+
+
+  // Reload on connected
   useEffect(() => {
     const handler = (n: number) => {
-      if (!ref || (n == 0 && !error)) return 
-      reload()
+      if (!ref || (n == 0 && !error)) return
+
+      // Reload
+      () => fetch_data(filters, {})
     }
     ctx.on('connected', handler)
     return () => ctx.off('connected', handler)
@@ -159,7 +178,7 @@ export const useCollectionData = <T extends Entity>(
     items,
     loading,
     error,
-    reload,
+    reload: () => fetch_data(filters, {}),
     reset: () => fetch_data({}),
     fetch_more: () => fetch_data({ ...filters, _cursor: cursor }, undefined, false),
     filter: (filters) => fetch_data(filters, {}),
