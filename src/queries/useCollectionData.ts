@@ -26,11 +26,10 @@ function useMutex() {
 }
 
 function getRealtimeRef(ref: string) {
-  if(!ref) return {}
-  const trimedRef = ref.split('?')[0].replace(/^\/+|\/+$/g, '')
-  const refs = trimedRef.split('/')
+  if (!ref) return {}
+  const realtimeRef = ref.split('?')[0].replace(/^\/+|\/+$/g, '')
+  const refs = realtimeRef.split('/')
   const isCollection = refs.length % 2 == 1
-  const realtimeRef = refs.slice(0, refs.length - (isCollection ? 0 : 1)).join('/')
   return { realtimeRef, isCollection }
 }
 
@@ -134,7 +133,6 @@ export const useCollectionData = <T extends Entity>(
     ), new Map())
     const deleted_items = new Set(items.filter(d => d.type == 'remove').map(d => d.data.id))
     const add_items = items.filter(d => d.type == 'add').map(d => d.data)
-
     return {
       ...s,
       items: [
