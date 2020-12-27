@@ -128,11 +128,11 @@ export const useCollectionData = <T extends Entity>(
   // Sync data realtime
   const realtime_sync = ({ items }: { items: RealtimeUpdateItem[] }) => setState(s => {
     const updated_items = items.reduce((p, c) => (
-      c.type == 'modified' && c.data.id && p.set(c.data.id, c.data),
+      c.type == 'UPDATE' && c.data.id && p.set(c.data.id, c.data),
       p
     ), new Map())
-    const deleted_items = new Set(items.filter(d => d.type == 'remove').map(d => d.data.id))
-    const add_items = items.filter(d => d.type == 'add').map(d => d.data)
+    const deleted_items = new Set(items.filter(d => d.type == 'DELETE').map(d => d.data.id))
+    const add_items = items.filter(d => d.type == 'INSERT').map(d => d.data)
     return {
       ...s,
       items: [

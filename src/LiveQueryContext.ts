@@ -11,7 +11,7 @@ export type SocketEvent<T> = T & {
 
 export type RealtimeUpdateItem = {
     data: { id: string },
-    type: 'add' | 'modified' | 'remove'
+    type: 'INSERT' | 'UPDATE' | 'DELETE'
 }
 
 export type RealtimeUpdate = SocketEvent<{
@@ -77,7 +77,7 @@ export class LiveQuery extends EventEmitter {
             console.log('Socket closed, reconnect in 3s ...')
             await new Promise(s => setTimeout(s, 3000))
         }
-    } 
+    }
 
 }
 
