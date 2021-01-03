@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState, useCallback } from "react"
 import { FilterExpressionList, FilterExpressionResult } from "./expressions"
 import { Entity } from "./Entity"
-import { LiveQueryContext, RealtimeUpdateItem } from "../LiveQueryContext"
+import { LiveQueryContext, RealtimeUpdate } from "../LiveQueryContext"
 import { formatFilters } from "./formatFilters"
 import { FiltersBuilderHook } from "./FiltersBuilderHook"
 import { CacheOption, Request, RequestHook, RequestOptions } from "../request/Request"
@@ -122,13 +122,17 @@ export const useCollectionData = <T extends Entity>(
   })
 
   // Sync data realtime 
-  const realtime_sync = useQueueCallback(({ items }: { items: RealtimeUpdateItem[] }) => setState(s => {
+  const realtime_sync = useQueueCallback(({ items }: RealtimeUpdate<any>) => setState(s => {
+    console.log('Start sync ', items[0].type)
     const updated_items = items.reduce((p, c) => (
-      c.type == 'UPDATE' && c.data.id && p.set(c.data.id, c.data),
+      c.type == 'UPDATE' && c.id && p.set(c.id, c.data),
       p
     ), new Map())
-    const deleted_items = new Set(items.filter(d => d.type == 'DELETE').map(d => d.data.id))
+    const deleted_items = new Set(items.filter(d => d.type == 'DELETE').map(d => d.id))
     const add_items = items.filter(d => d.type == 'INSERT').map(d => d.data)
+    console.log('Done sync ', items[0].type)
+    console.log({ updated_items, deleted_items, add_items })
+    console.log({ items: s.items })
     return {
       ...s,
       items: [

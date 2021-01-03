@@ -9,16 +9,17 @@ export type SocketEvent<T> = T & {
     event: string
 }
 
-export type RealtimeUpdateItem = {
-    data: { id: string },
-    type: 'INSERT' | 'UPDATE' | 'DELETE'
+export type RealtimeUpdateItem<T> = {
+    id: string
+    type: 'INSERT' | 'UPDATE' | 'DELETE',
+    data: T
+    ref: string
 }
 
-export type RealtimeUpdate = SocketEvent<{
-    items: RealtimeUpdateItem[]
+export type RealtimeUpdate<T extends { id: string }> = SocketEvent<{
+    items: RealtimeUpdateItem<T>[]
     ref: string
 }>
-
 
 export class LiveQuery extends EventEmitter {
 
@@ -40,7 +41,7 @@ export class LiveQuery extends EventEmitter {
         this.connected_amount++
     }
 
-    private realtime_update(evt: RealtimeUpdate) {
+    private realtime_update(evt: RealtimeUpdate<any>) {
         this.emit(evt.ref, evt)
     }
 
