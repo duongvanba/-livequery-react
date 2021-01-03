@@ -1,10 +1,11 @@
-import { useContext, useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useRef, useState, useCallback } from "react"
 import { FilterExpressionList, FilterExpressionResult } from "./expressions"
 import { Entity } from "./Entity"
 import { LiveQueryContext, RealtimeUpdateItem } from "../LiveQueryContext"
 import { formatFilters } from "./formatFilters"
 import { FiltersBuilderHook } from "./FiltersBuilderHook"
 import { CacheOption, Request, RequestHook, RequestOptions } from "../request/Request"
+import Queue from 'p-queue'
 
 
 export type useCollectionDataOptions<T extends Entity> = {
@@ -15,15 +16,7 @@ export type useCollectionDataOptions<T extends Entity> = {
   cache: CacheOption | true
 }
 
-function useMutex() {
-  const mutex = useRef(false)
 
-  return {
-    locking: mutex.current,
-    lock: () => mutex.current = true,
-    unlock: () => mutex.current = false
-  }
-}
 
 function getRealtimeRef(ref: string) {
   if (!ref) return {}
@@ -32,6 +25,15 @@ function getRealtimeRef(ref: string) {
   const isCollection = refs.length % 2 == 1
   return { realtimeRef, isCollection }
 }
+
+function useQueueCallback<T extends Function>(fn: T) {
+  const queue = useRef(new Queue({ concurrency: 1 }))
+  const callback = useCallback((...args: any[]) => {
+    queue.current.add(() => (fn as any)(...args))
+  }, [])
+  return callback as any as T
+}
+
 
 export const useCollectionData = <T extends Entity>(
   ref: string,
@@ -60,17 +62,12 @@ export const useCollectionData = <T extends Entity>(
   })
 
 
-  // Fetch data 
-  const PreventDuplicateMutex = useMutex()
-  async function fetch_data(
+  // Fetch data   
+  const fetch_data = useQueueCallback(async (
     query_filters: FilterExpressionList<T> = {},
     cache_config: CacheOption = (options.cache == true ? { update: true, use: true } : options.cache),
     flush: boolean = true
-  ) {
-
-    if (PreventDuplicateMutex.locking) return
-    PreventDuplicateMutex.lock()
-
+  ) => {
     try {
       const filters = formatFilters(query_filters)
       setState(s => ({
@@ -122,11 +119,10 @@ export const useCollectionData = <T extends Entity>(
       setState(s => ({ ...s, error, loading: false }))
       console.error(error)
     }
-    PreventDuplicateMutex.unlock()
-  }
+  })
 
-  // Sync data realtime
-  const realtime_sync = ({ items }: { items: RealtimeUpdateItem[] }) => setState(s => {
+  // Sync data realtime 
+  const realtime_sync = useQueueCallback(({ items }: { items: RealtimeUpdateItem[] }) => setState(s => {
     const updated_items = items.reduce((p, c) => (
       c.type == 'UPDATE' && c.data.id && p.set(c.data.id, c.data),
       p
@@ -142,7 +138,7 @@ export const useCollectionData = <T extends Entity>(
           .map(item => ({ ...item, ...updated_items.get(item.id) || {} }))
       ]
     }
-  })
+  }))
 
 
   // Load data & realtime update listener
