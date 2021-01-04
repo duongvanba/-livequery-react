@@ -4,7 +4,7 @@ import { Entity } from "./Entity"
 import { LiveQueryContext, RealtimeUpdate } from "../LiveQueryContext"
 import { formatFilters } from "./formatFilters"
 import { FiltersBuilderHook } from "./FiltersBuilderHook"
-import { CacheOption, Request, RequestHook, RequestOptions } from "../request/Request"
+import { CacheOption, RequestHook, RequestOptions } from "../request/Request"
 import Queue from 'p-queue'
 
 
@@ -42,7 +42,7 @@ export const useCollectionData = <T extends Entity>(
 
 
   const ctx = useContext(LiveQueryContext)
-  const { isCollection, realtimeRef } = getRealtimeRef(ref)
+
 
   // Hook main state
   const [{ error, loading, cursor, has_more, items, filters }, setState] = useState<{
@@ -64,6 +64,7 @@ export const useCollectionData = <T extends Entity>(
 
   // Fetch data   
   const fetch_data = useQueueCallback(async (
+    ref: string,
     query_filters: FilterExpressionList<T> = {},
     cache_config: CacheOption = (options.cache == true ? { update: true, use: true } : options.cache),
     flush: boolean = true
@@ -94,6 +95,7 @@ export const useCollectionData = <T extends Entity>(
       }
 
       // If collection
+      const { isCollection } = getRealtimeRef(ref)
       if (isCollection) {
         const { data } = await ctx.request(request_options)
 
@@ -123,16 +125,13 @@ export const useCollectionData = <T extends Entity>(
 
   // Sync data realtime 
   const realtime_sync = useQueueCallback(({ items }: RealtimeUpdate<any>) => setState(s => {
-    console.log('Start sync ', items[0].type)
+
     const updated_items = items.reduce((p, c) => (
       c.type == 'UPDATE' && c.id && p.set(c.id, c.data),
       p
     ), new Map())
     const deleted_items = new Set(items.filter(d => d.type == 'DELETE').map(d => d.id))
     const add_items = items.filter(d => d.type == 'INSERT').map(d => d.data)
-    console.log('Done sync ', items[0].type)
-    console.log({ updated_items, deleted_items, add_items })
-    console.log({ items: s.items })
     return {
       ...s,
       items: [
@@ -145,14 +144,15 @@ export const useCollectionData = <T extends Entity>(
   }))
 
 
-  // Load data & realtime update listener
+  // Inital fetch & realtime 
   useEffect(() => {
     // Fetch
     if (!ref) return
-    fetch_data(options.where)
+    fetch_data(ref, options.where)
 
     // Socket
     if (options.reatime != false) {
+      const { realtimeRef } = getRealtimeRef(ref)
       ctx.on(realtimeRef, realtime_sync)
       return () => ctx.off(realtimeRef, realtime_sync)
     }
@@ -166,8 +166,8 @@ export const useCollectionData = <T extends Entity>(
     const handler = (n: number) => {
       if (!ref || (n == 0 && !error)) return
 
-      // Reload
-      () => fetch_data(filters, {})
+      // Reload 
+      fetch_data(ref, filters, {})
     }
     ctx.on('connected', handler)
     return () => ctx.off('connected', handler)
@@ -177,10 +177,10 @@ export const useCollectionData = <T extends Entity>(
     items,
     loading,
     error,
-    reload: () => fetch_data(filters, {}),
-    reset: () => fetch_data({}),
-    fetch_more: () => fetch_data({ ...filters, _cursor: cursor }, undefined, false),
-    filter: (filters) => fetch_data(filters, {}),
+    reload: () => fetch_data(ref, filters, {}),
+    reset: () => fetch_data(ref, {}),
+    fetch_more: () => fetch_data(ref, { ...filters, _cursor: cursor }, undefined, false),
+    filter: (filters) => fetch_data(ref, filters, {}),
     has_more,
     empty: items.length == 0 && !loading && !error,
     filters

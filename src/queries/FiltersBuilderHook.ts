@@ -1,5 +1,4 @@
-import { RequestHook } from "../request/Request"
-import { FilterExpressionList } from "./expressions"
+import { RequestHook } from "../request/Request" 
  
 export const FiltersBuilderHook: RequestHook = {
   beforeRequest(options) {
