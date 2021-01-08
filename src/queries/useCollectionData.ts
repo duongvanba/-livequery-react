@@ -180,7 +180,7 @@ export const useCollectionData = <T extends Entity>(
     reload: () => fetch_data(ref, filters, {}),
     reset: () => fetch_data(ref, {}),
     fetch_more: () => fetch_data(ref, { ...filters, _cursor: cursor }, undefined, false),
-    filter: (filters) => fetch_data(ref, filters, {}),
+    filter: (filters) => fetch_data(ref, Object.keys(filters).reduce((p, key) => ({ ...p, ...filters[key] === undefined ? {} : { [key]: filters[key] } }), {}), {}),
     has_more,
     empty: items.length == 0 && !loading && !error,
     filters
