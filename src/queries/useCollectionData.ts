@@ -75,8 +75,7 @@ export const useCollectionData = <T extends Entity>(
         ...s,
         error: null,
         loading: true,
-        filters,
-        items: flush ? [] : s.items
+        filters
       }))
 
 
@@ -100,7 +99,7 @@ export const useCollectionData = <T extends Entity>(
         const { data } = await ctx.request(request_options)
 
         setState(s => {
-          const items = [...s.items, ...data?.items || []]
+          const items = [...flush ? [] : s.items, ...data?.items || []]
           return {
             ...s,
             cursor: data?.cursor || null,
@@ -167,7 +166,7 @@ export const useCollectionData = <T extends Entity>(
       if (!ref || (n == 0 && !error)) return
 
       // Reload 
-      fetch_data(ref, filters, {}, false)
+      fetch_data(ref, filters, {})
     }
     ctx.on('connected', handler)
     return () => ctx.off('connected', handler)
