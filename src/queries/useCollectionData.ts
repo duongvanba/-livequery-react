@@ -167,7 +167,7 @@ export const useCollectionData = <T extends Entity>(
       if (!ref || (n == 0 && !error)) return
 
       // Reload 
-      fetch_data(ref, filters, {})
+      fetch_data(ref, filters, {}, false)
     }
     ctx.on('connected', handler)
     return () => ctx.off('connected', handler)
