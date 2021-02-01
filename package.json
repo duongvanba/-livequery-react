@@ -21,7 +21,8 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -b ."
+    "build": "tsc -b .",
+    "deploy":"yarn build; git add .; git commit -m "Update"; git push origin master; npm publish"
   },
   "author": "",
   "license": "ISC"
