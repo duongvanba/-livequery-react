@@ -9,3 +9,4 @@ export { LiveQueryContextProvider } from "./LiveQueryContextProvider";
 export { useCollectionData } from "./queries/useCollectionData";
 export { useDocumentData } from "./queries/useDocumentData";
 export { Request, CacheOption, RequestHook, RequestOptions } from './request/Request'
+export { Response } from './queries/Response'
