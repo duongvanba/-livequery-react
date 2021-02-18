@@ -113,7 +113,7 @@ export const useCollectionData = <T extends Entity>(
         // If not colleciton
       } else {
         const item = await ctx.request<T>(request_options)
-        setState(s => ({ ...s, items: item ? [item] : [] }))
+        setState(s => ({ ...s, items: item ? [item] : [], loading:false }))
       }
 
     } catch (error) {
