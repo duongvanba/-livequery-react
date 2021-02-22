@@ -3,7 +3,7 @@
   "repository": {
     "url": "https://github.com/duongvanba/react-livequery-hooks"
   },
-  "version": "1.0.82",
+  "version": "1.0.84",
   "description": "",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -22,7 +22,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -b .",
-    "deploy":"yarn build; git add .; git commit -m \"Update\"; git push origin master; npm publish"
+    "deploy": "yarn build; git add .; git commit -m \"Update\"; git push origin master; npm publish"
   },
   "author": "",
   "license": "ISC"
