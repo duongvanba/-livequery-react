@@ -54,7 +54,7 @@ export const useCollectionData = <T extends Entity>(
     filters: FilterExpressionResult<T>
   }>({
     items: [],
-    loading: true,
+    loading: !!ref,
     error: null,
     has_more: false,
     cursor: null,
@@ -113,7 +113,7 @@ export const useCollectionData = <T extends Entity>(
         // If not colleciton
       } else {
         const item = await ctx.request<T>(request_options)
-        setState(s => ({ ...s, items: item ? [item] : [], loading:false }))
+        setState(s => ({ ...s, items: item ? [item] : [], loading: false }))
       }
 
     } catch (error) {
