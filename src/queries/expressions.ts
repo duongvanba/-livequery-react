@@ -8,9 +8,11 @@ export const lt = <T>(value: T) => ({ exp: 'lt', value }) as FilterExpression<T>
 export const lte = <T>(value: T) => ({ exp: 'lte', value }) as FilterExpression<T>
 export const in_array = <T>(value: T[]) => ({ exp: 'in', value }) as FilterExpression<T>
 
-export type FilterExpressionList<T> = { _q?: string, _order_by?: keyof T, _sort?: 'asc' | 'desc' } & {
+export type OptionalOptions<T> = { _q?: string, _order_by?: keyof T, _sort?: 'asc' | 'desc' }
+
+export type FilterExpressionList<T> = OptionalOptions<T> & {
     [key in keyof T]?: null | T[key] | FilterExpression<T[key]>
 }
-export type FilterExpressionResult<T> = { _q?: string } & {
+export type FilterExpressionResult<T> = OptionalOptions<T> & {
     [key in keyof T]?: null | FilterExpression<T[key]>
 }
