@@ -5,7 +5,7 @@ import { RequestHook, RequestOptions, Request } from './request/Request'
 
 export const RealtimeUpdateBus = new EventEmitter()
 
-RealtimeUpdateBus.setMaxListeners(100)
+RealtimeUpdateBus.setMaxListeners(0)
 
 export type SocketEvent<T> = T & {
     event: string
