@@ -187,7 +187,7 @@ export const useCollectionData = <T extends Entity>(
       {}
     ),
     has_more,
-    empty: items.length == 0 || loading,
+    empty: !error && items.length == 0 && !loading,
     filters
   }
 }
